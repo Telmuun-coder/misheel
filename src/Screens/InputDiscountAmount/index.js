@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import Currency from 'react-currency-formatter';
 import RNPickerSelect from 'react-native-picker-select';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/AntDesign';
 import axios from 'axios';
 
 import {UserState} from '../../Context/UserStore';
@@ -80,7 +80,10 @@ const DiscountAmount = () => {
   return (
     <View style={styles.container}>
       <Spinner visible={spin} />
-      <Text>Зогсоол сонголт</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Хөнгөлөлтийн хуудас хэвлэх</Text>
+      </View>
+      <Text style={styles.tailbar}>Зогсоол сонголт</Text>
       <RNPickerSelect
         placeholder={placeholder}
         items={state.parkingList.map((e, i) => {
@@ -95,8 +98,8 @@ const DiscountAmount = () => {
         style={{
           ...pickerSelectStyles,
           iconContainer: {
-            top: 10,
-            right: 12,
+            top: 15,
+            right: 20,
             // backgroundColor: 'red',
           },
         }}
@@ -104,11 +107,11 @@ const DiscountAmount = () => {
         useNativeAndroidPickerStyle={false}
         // textInputProps={{underlineColor: 'yellow'}}
         Icon={() => {
-          return <Icon name="md-arrow-down" size={24} color="gray" />;
+          return <Icon name="down" size={24} color="gray" />;
         }}
       />
 
-      <Text>Хөнгөлөлтийн дүнг оруулах</Text>
+      <Text style={styles.tailbar}>Хөнгөлөлтийн дүнг оруулах</Text>
       <TextInput
         ref={myRef}
         maxLength={9}
@@ -139,7 +142,7 @@ const DiscountAmount = () => {
         <Text style={{color: 'white'}}>ХЭВЛЭ</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => auth.logout()} style={{marginTop: 50}}>
-        <Text>logOut</Text>
+        <Text>ГАРАХ</Text>
       </TouchableOpacity>
     </View>
   );
@@ -183,12 +186,19 @@ const styles = StyleSheet.create({
   print: {
     width: '70%',
     height: 50,
-    backgroundColor: 'purple',
+    backgroundColor: '#2A363B',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 10,
     elevation: 10,
+  },
+  header: {
+    position: 'absolute',
+    top: 50,
+  },
+  title: {
+    fontSize: 20,
   },
 });
 

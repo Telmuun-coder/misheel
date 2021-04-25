@@ -9,20 +9,14 @@ import {
 
 const Loader = (props) => {
   return (
-    <>
-      {props.visible && (
-        <View style={styles.containerView}>
-          {/* <StatusBar
-            hidden={true}
-            //backgroundColor="black"
-          /> */}
-          <View style={styles.loader}>
-            <ActivityIndicator size="large" color="black" />
-            <Text>Ачаалж байна түр хүлээнэ үү...</Text>
-          </View>
+    props.visible && (
+      <View style={styles.containerView}>
+        <View style={styles.loader}>
+          <ActivityIndicator size="large" color="black" />
+          <Text>Ачаалж байна түр хүлээнэ үү...</Text>
         </View>
-      )}
-    </>
+      </View>
+    )
   );
 };
 

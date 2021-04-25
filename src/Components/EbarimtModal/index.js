@@ -38,10 +38,14 @@ const Ebarimt = (props) => {
     }
   };
   return (
-    <Modal animationType="slide" transparent={true}>
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={props.showModal}
+      onRequestClose={() => props.setShowModal({show: false})}>
       <View
         style={styles.shadow}
-        // onStartShouldSetResponder={() => props.setShowModal({show: false})}
+        onStartShouldSetResponder={() => props.setShowModal({show: false})}
       />
       <View style={styles.container}>
         <Text style={styles.title}>Баримт Хэвлэх</Text>

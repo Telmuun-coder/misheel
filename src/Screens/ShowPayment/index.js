@@ -623,20 +623,18 @@ const ShowPayment = (props) => {
     <>
       {spin && <Spinner visible={true} />}
       <View style={styles.container}>
-        {modal.show && (
-          <Ebarimt
-            // showModal={modal.show}
-            printEbarimt={(info) => printEbarimt(info)}
-            setShowModal={(modal) => setModal((prev) => ({...prev, ...modal}))}
-          />
-        )}
+        <Ebarimt
+          showModal={modal.show}
+          printEbarimt={(info) => printEbarimt(info)}
+          setShowModal={(modal) => setModal((prev) => ({...prev, ...modal}))}
+        />
         <Header
           title="Төлбөр төлөх"
           callback={() => {
             payType.isPaid ? AlertBeforeGoBack() : props.navigation.goBack();
           }}
         />
-        <Text style={styles.name}>ЯМАР НЭГ ГАЗРЫН ЗОГСООЛ</Text>
+        <Text style={styles.name}>{state.parkingList[0].parkingName}</Text>
 
         <View style={styles.infos}>
           <View style={styles.row}>

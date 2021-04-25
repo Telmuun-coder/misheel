@@ -20,8 +20,8 @@ const Settings = ({navigation}) => {
   //   console.log()
   const valid = (localIp) => {
     setState((prev) => ({...prev, localIp: localIp}));
-    if (localIp.match(/\./g).length == 4) setNonValid(false);
-    else setNonValid(true);
+    // if (localIp.match(/\./g).length == 4) setNonValid(false);
+    // else setNonValid(true);
   };
 
   const handleSave = () => {

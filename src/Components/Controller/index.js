@@ -75,19 +75,13 @@ const Controller = (props) => {
         index={3}
         click={(e) => setSelectedValue(e)}
       /> */}
-      <View
-        style={{
-          flexDirection: 'row',
-          width: '60%',
-          justifyContent: 'space-around',
-          marginTop: 10,
-        }}>
-        <Button icon="car" onPress={props.getCar} />
-        <Button icon="search1" onPress={() => props.onSearch(selectedValue)} />
-        <Button icon="reload1" onPress={clear} />
+      <View style={styles.buttons}>
         {state.userRole == 'POSTPOS' && (
           <ScannButton onPress={props.scanBarcode} />
         )}
+        <Button icon="car" onPress={props.getCar} />
+        <Button icon="reload1" onPress={clear} />
+        <Button icon="search1" onPress={() => props.onSearch(selectedValue)} />
       </View>
     </View>
   );
@@ -115,5 +109,11 @@ const styles = StyleSheet.create({
     // height: 0,
     // fontSize: 1,
     opacity: 0,
+  },
+  buttons: {
+    flexDirection: 'row',
+    width: '60%',
+    justifyContent: 'space-around',
+    marginTop: 10,
   },
 });
