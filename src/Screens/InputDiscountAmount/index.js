@@ -20,6 +20,7 @@ import Spinner from '../../Components/Spinner';
 import config from '../../../config';
 
 const window_widht = Dimensions.get('window').width;
+const window_height = Dimensions.get('window').height;
 
 const placeholder = {
   label: 'Select a parking type...',
@@ -40,27 +41,19 @@ const DiscountAmount = () => {
   };
 
   const Print = async () => {
-    // console.log('paID', state.parkingList[0].parkingId);
     axios.defaults.headers.common = {
       Authorization: `Bearer ${state.token}`,
     };
     setSpin(true);
-    PayByCard.doData();
+    await PayByCard.doData();
     await axios
-      .post(
-        // 'http://api.minu.mn/parking/paMerchant/generateQr'
-        // 'http://172.16.20.29:6085/parking/paMerchant/generateQr',
-        `${config.apiMinu}/parking/paMerchant/generateQr`,
-        {
-          amount: amount + '',
-          parkingId: park,
-        },
-      )
+      .post(`${config.apiMinu}/parking/paMerchant/generateQr`, {
+        amount: amount + '',
+        parkingId: park,
+      })
       .then((res) => {
         setSpin(false);
         if (res.data.message === 'Амжилттай') {
-          console.log('reallyMe', res.data.entity);
-          // console.log('name: ', state.merchant.merchantName);
           PrintDiscount.callPrinter(
             JSON.stringify({
               merchantName: state.merchant.merchantName,
@@ -79,11 +72,10 @@ const DiscountAmount = () => {
 
   return (
     <View style={styles.container}>
-      <Spinner visible={spin} />
       <View style={styles.header}>
         <Text style={styles.title}>Хөнгөлөлтийн хуудас хэвлэх</Text>
       </View>
-      <Text style={styles.tailbar}>Зогсоол сонголт</Text>
+      <Text style={styles.tailbar}>Зогсоол сонгох</Text>
       <RNPickerSelect
         placeholder={placeholder}
         items={state.parkingList.map((e, i) => {
@@ -138,12 +130,15 @@ const DiscountAmount = () => {
           />
         </Text>
       </TouchableWithoutFeedback>
-      <TouchableOpacity onPress={Print} style={styles.print}>
-        <Text style={{color: 'white'}}>ХЭВЛЭ</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => auth.logout()} style={{marginTop: 50}}>
-        <Text>ГАРАХ</Text>
-      </TouchableOpacity>
+      <View style={styles.btnCon}>
+        <TouchableOpacity onPress={Print} style={styles.print}>
+          <Text style={{color: 'white'}}>ХЭВЛЭХ</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => auth.logout()} style={{marginTop: 50}}>
+          <Text style={styles.logoutText}>ГАРАХ</Text>
+        </TouchableOpacity>
+      </View>
+      <Spinner visible={spin} />
     </View>
   );
 };
@@ -186,12 +181,13 @@ const styles = StyleSheet.create({
   print: {
     width: '70%',
     height: 50,
-    backgroundColor: '#2A363B',
+    backgroundColor: '#006AB5',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 10,
-    elevation: 10,
+    elevation: 5,
+    zIndex: -1,
   },
   header: {
     position: 'absolute',
@@ -199,6 +195,24 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  tailbar: {
+    color: 'gray',
+    alignSelf: 'flex-end',
+    marginHorizontal: '20%',
+  },
+  logoutText: {
+    color: 'gray',
+  },
+  btnCon: {
+    zIndex: -1,
+    width: '100%',
+    flex: 0.3,
+    // backgroundColor: 'red',
+    alignItems: 'center',
+    marginTop: 20,
   },
 });
 

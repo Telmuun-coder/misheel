@@ -1,4 +1,4 @@
-import React, {useState, useContext} from 'react';
+import React, {useState, useContext, useLayoutEffect} from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,8 @@ import PayByCash from './src/Screens/PayByCash';
 import DrawerContent from './src/Screens/DrawerContent';
 import Splash from './src/Screens/Splash';
 import Settings from './src/Screens/Settings';
+import {  setSimcard, setIp } from './config';
+import AsyncStorage from '@react-native-community/async-storage';
 
 const Drawer = createDrawerNavigator();
 
@@ -35,11 +37,6 @@ const Hanburner = () => {
       drawerContent={(props) => <DrawerContent {...props} />}
       initialRouteName="Home"
       drawerPosition="left"
-      // drawerContentOptions={{
-      //   // activeBackgroundColor: 'red',
-      //   // activeTintColor: 'red',
-      //   // inactiveTintColor: 'green',
-      // }}
       screenOptions={{
         swipeEnabled: true,
       }}>
@@ -102,7 +99,16 @@ const authStack = createStackNavigator();
 
 const App = () => {
   const {state, showSplash} = useContext(UserState);
-  // console.log(state.token);
+  useLayoutEffect(() => {
+    const setSetting = async () => {
+      const simType = await AsyncStorage.getItem('simType');
+      const localId = await AsyncStorage.getItem('localId');
+      console.log(simType);
+      if(simType) setSimcard(simType); 
+      if(localId) setIp(localId);
+    };
+    setSetting();
+  },[])
   return (
     // <PayByCash />
     <NavigationContainer>
@@ -122,6 +128,9 @@ const App = () => {
             name="Login"
             component={Login}
             options={{headerShown: false}}
+          />
+          <authStack.Screen
+            name="Settings" component={Settings}
           />
         </authStack.Navigator>
       )}

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useLayoutEffect, useRef} from 'react';
 import {
   TouchableHighlight,
   StyleSheet,
@@ -7,16 +7,21 @@ import {
   TextInput,
   Dimensions,
 } from 'react-native';
-import config, {setIp} from '../../../config';
+import config, {setIp, setSimcard, sim} from '../../../config';
 import AsyncStorage from '@react-native-community/async-storage';
+import RadioPIcker from '../../Components/RadioPIcker';
 
 const {width, height} = Dimensions.get('window');
 
 const Settings = ({navigation}) => {
+  const pickerRef = useRef(null);
   const [state, setState] = useState({
-    localIp: config.localIp.slice(7, config.localIp.length),
+    // localIp: config.localIp.slice(7, config.localIp.length),
+    localIp: null,
   });
+const [companyId, setCompanyId] = useState(null);
   const [nonValid, setNonValid] = useState(false);
+  const [sim, setSim] = useState(null);
   //   console.log()
   const valid = (localIp) => {
     setState((prev) => ({...prev, localIp: localIp}));
@@ -24,12 +29,34 @@ const Settings = ({navigation}) => {
     // else setNonValid(true);
   };
 
+  const changeSim = (simType) => {
+    setSim(simType);
+    setSimcard(simType);
+  };
+
   const handleSave = () => {
     if (nonValid) return;
 
     setIp(state.localIp);
-    navigation.navigate('Home');
+    navigation.goBack();
+    // navigation.navigate('Home');
   };
+
+  useLayoutEffect(()=>{
+    const getInitValue = async () => {
+      const simType = await AsyncStorage.getItem('simType');
+      const localIp = await AsyncStorage.getItem('localId');
+      console.log("sim:", simType);
+      
+      if(simType) {
+        setSim(simType);
+        pickerRef.current.setTypeValue(simType);
+      }; 
+      if(localIp) setState({localIp});
+    }
+    getInitValue();
+  },[])
+
   return (
     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
       <View style={styles.row}>
@@ -41,10 +68,26 @@ const Settings = ({navigation}) => {
           maxLength={15}
           value={state.localIp}
           keyboardType="number-pad"
-          onSubmitEditing={handleSave}
+          // onSubmitEditing={handleSave}
           onChangeText={(val) => valid(val)}
         />
       </View>
+
+      <View style={styles.row}>
+        <Text style={styles.title}>Байгууллагын {'\n'}дугаар:</Text>
+        <TextInput
+          textAlign="center"
+          style={styles.input}
+          placeholder="0000"
+          maxLength={10}
+          value={companyId}
+          keyboardType="number-pad"
+          // onSubmitEditing={handleSave}
+          onChangeText={(id) => setCompanyId(id)}
+        />
+        </View>
+        <RadioPIcker simType={sim} onPress={changeSim} ref={pickerRef}/>
+    
       <TouchableHighlight
         style={[styles.btnSave, nonValid && styles.dis]}
         activeOpacity={0.6}
@@ -58,13 +101,18 @@ const Settings = ({navigation}) => {
 export default Settings;
 
 const styles = StyleSheet.create({
+  pickerCon: {
+
+  },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
     alignItems: 'center',
     // backgroundColor: 'gray',
-    height: 35,
+    height: 45,
     width,
+    marginVertical: 8
   },
   input: {
     fontSize: 20,

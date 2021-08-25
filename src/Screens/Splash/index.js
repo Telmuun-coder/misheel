@@ -1,10 +1,14 @@
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, Text, View, Image} from 'react-native';
 
 const Splash = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Splash Screen</Text>
+      <Image
+        style={styles.logo}
+        source={require('../../Images/parkingLogo.png')}
+      />
+      <Text style={styles.title}>Minu parking v1.0</Text>
     </View>
   );
 };
@@ -17,9 +21,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#242424',
   },
-  text: {
+  title: {
     fontSize: 15,
     fontFamily: 'Hack',
+    color: 'white',
+  },
+  logo: {
+    width: 120,
+    height: 120,
   },
 });

@@ -17,15 +17,16 @@ export default PayButton;
 
 const styles = StyleSheet.create({
   container: {
-    width: 130,
+    width: 150,
     height: 40,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#D81E21',
-    elevation: 10,
+    elevation: 5,
   },
   text: {
     color: '#FEFDFF',
+    fontFamily: 'RobotoCondensed-Regular',
   },
 });

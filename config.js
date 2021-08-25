@@ -1,13 +1,36 @@
-let config = {
-  localIp: 'http://192.168.1.96', //'http://192.168.100.185',
-  eBarimtPut: 'http://172.16.30.29:9000/bill/putArray', //172.16.30.26:9000=> mobi SIM
-  apiMinu: 'http://172.16.30.29:6085', //'', //http://api.minu.mn || 172.16.30.29 => Mobi SIM
-  // apiMinu: 'http://api.minu.mn', //'', //http://api.minu.mn || 172.16.30.29 => Mobi SIM
-  apiMinu2: 'http://api.minu.mn', //'http://192.168.160.30:6085', //http://api.minu.mn
+import AsyncStorage from '@react-native-community/async-storage';
+
+const ips = {
+  mobicom: `http://172.16.30.29`,
+  unitel: 'http://172.16.20.29',
 };
+
+
+// export let sim = ips.mobicom; 
+export let sim = null; 
+
+let config = {
+  // localIp: 'http://192.168.137.1',
+  // localIp: 'http://192.168.100.82',
+  localIp: 'http://0.0.0.0',
+  eBarimtPut: `${sim}:9000/bill/putArray`, 
+  apiMinu: `${sim}:6085`,
+  apiMinu2: 'http://api.minu.mn', 
+};
+
 //shuud export hiij uzeh file aa
 export const setIp = (localIp) => {
   config.localIp = 'http://' + localIp;
+  AsyncStorage.setItem('localId', localIp);
+};
+
+export const setSimcard = (simType) => {
+  console.log("setting simtype:", simType);
+  sim = simType == 'mobicom' ? ips.mobicom : ips.unitel;
+  config.apiMinu = `${sim}:6085`;
+  config.eBarimtPut = `${sim}:9000/bill/putArray`;
+  console.log(config);
+  AsyncStorage.setItem('simType', simType);
 };
 
 export default config;

@@ -84,8 +84,11 @@ export const stockGeneretor = (minut, p30, p60, p120, pp) => {
 export const fixJson = (jison) => {
   const regex = /False/gi;
   const regex1 = /True/gi;
+  const regex2 = /None/gi;
   let tmp = `"${jison}"`.replace(regex, 'false');
   tmp = `${tmp}`.replace(regex1, 'true');
+  tmp = `${tmp}`.replace(regex2, null);
+  // console.log(tmp);
   return JSON.parse(tmp.slice(1, tmp.length - 1));
 };
 

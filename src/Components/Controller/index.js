@@ -77,7 +77,7 @@ const Controller = (props) => {
       /> */}
       <View style={styles.buttons}>
         {state.userRole == 'POSTPOS' && (
-          <ScannButton onPress={props.scanBarcode} />
+          <ScannButton onPress={props.scanBarcode} disabled/>
         )}
         <Button icon="car" onPress={props.getCar} />
         <Button icon="reload1" onPress={clear} />

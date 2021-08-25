@@ -1,8 +1,8 @@
-import React, {useState, createContext, useMemo, useEffect} from 'react';
+import React, {useState, createContext, useMemo, useEffect, useLayoutEffect} from 'react';
 import {NativeModules} from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-community/async-storage';
-import config from '../../config';
+import config, {setSimcard, setIp} from '../../config';
 
 export const UserState = createContext();
 
@@ -44,9 +44,7 @@ const UserStore = (props) => {
         };
         setSpin(true);
         try {
-          PayByCard.doData().then((e) =>
-            console.log('switch internet source in login: ', e),
-          );
+          await PayByCard.doData(); //then((e) => console.log('switch internet source in login: ', e));
           let res = await axios.post(
             config.apiMinu + '/parking/paUser/login',
             user,
@@ -90,6 +88,17 @@ const UserStore = (props) => {
   const cacheState = async (tmp) => {
     await AsyncStorage.setItem('state', JSON.stringify(tmp));
   };
+
+  useLayoutEffect(() => {
+    const setSetting = async () => {
+      const simType = await AsyncStorage.getItem('simType');
+      const localId = await AsyncStorage.getItem('localId');
+      console.log(simType);
+      if(simType) setSimcard(simType); 
+      if(localId) setIp(localId);
+    };
+    setSetting();
+  },[])
 
   useEffect(() => {
     const restore = async () => {

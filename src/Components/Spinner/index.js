@@ -12,7 +12,7 @@ const Loader = (props) => {
     props.visible && (
       <View style={styles.containerView}>
         <View style={styles.loader}>
-          <ActivityIndicator size="large" color="black" />
+          <ActivityIndicator size="large" color="#006AB5" />
           <Text>Ачаалж байна түр хүлээнэ үү...</Text>
         </View>
       </View>

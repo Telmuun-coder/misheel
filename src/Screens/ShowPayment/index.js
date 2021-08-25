@@ -19,6 +19,11 @@ import Spinner from '../../Components/Spinner';
 import Ebarimt from '../../Components/EbarimtModal';
 import Header from '../../Components/Header';
 
+
+function numberWithCommas(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 import {
   stockGeneretor,
   fixJson,
@@ -39,6 +44,7 @@ const ShowPayment = (props) => {
   const [payType, setPayType] = useState({
     type: 'CASH',
     rrn: '0000000000001',
+    invoice: null,
     paidAmount: 0,
     isPaid: false,
   });
@@ -75,6 +81,7 @@ const ShowPayment = (props) => {
     serverTxnId: null,
   });
   const route = useRoute();
+
   const AlertBeforeGoBack = () =>
     Alert.alert(
       'Анхаар!',
@@ -153,11 +160,11 @@ const ShowPayment = (props) => {
       });
   };
 
-  const checkDiscount = (qr) => {
+  const checkDiscount = async (qr) => {
     axios.defaults.headers.common = {
       Authorization: `Bearer ${state.token}`,
     };
-    PayByCard.doData();
+    await PayByCard.doData();
     setQrState((prev) => ({...prev, qrcode: qr}));
 
     setSpin(true);
@@ -264,10 +271,11 @@ const ShowPayment = (props) => {
   };
 
   const printEbarimt = async (info) => {
+
     let amount = parseInt(localInfo.totalAmount) - parseInt(qrState.amount);
     amount = (Math.round(amount * 100) / 100).toFixed(2);
     const vat = (Math.round((amount / 11) * 100) / 100).toFixed(2);
-    console.log('DISCTRICT CODE: ', state.parkingList[0].districtCode);
+
     const data = [
       {
         organization_id: 29, //eniig login hiihed awaad useStore-s awna
@@ -283,7 +291,7 @@ const ShowPayment = (props) => {
         billIdSuffix: '',
         returnBillId: '',
         taxType: '1',
-        invoiceId: '', //payType.rrn, eniig tolboroo yg tolbog bolgochood holboh
+        invoiceId: payType.rrn ? payType.rrn : null, //payType.rrn, eniig tolboroo yg tolbog bolgochood holboh
         reportMount: dateFormat(new Date(), 'yyyy-mm'),
         branchNo: '001', //back-endes l awah bhda
         stocks: [
@@ -295,9 +303,7 @@ const ShowPayment = (props) => {
             name: 'Зогсоолын төлбөр',
             qty: (Math.round(localInfo.totalMinutes * 100) / 100).toFixed(2),
             totalAmount: amount,
-            unitPrice: (
-              Math.round((amount / localInfo.totalMinutes) * 100) / 100
-            ).toFixed(2),
+            unitPrice: (Math.round((amount / localInfo.totalMinutes) * 100) / 100).toFixed(2),
             vat: (Math.round((amount / 11) * 100) / 100).toFixed(2),
           },
         ],
@@ -305,16 +311,54 @@ const ShowPayment = (props) => {
         bankTransactions: '',
       },
     ];
+    const exampleData = [
+      {
+        organization_id: 29,
+        amount: '25200.00',
+        vat: '0.00',
+        cashAmount: '25200.00',
+        nonCashAmount: '0.00',
+        cityTax: '0.00',
+        districtCode: '24',
+        posNo: '',
+        customerNo: '',
+        billType: '1',
+        billIdSuffix: '',
+        returnBillId: '',
+        taxType: '1',
+        invoiceId: '',
+        reportMount: '2019-06',
+        branchNo: '023',
+        stocks: [
+          {
+            code: '410',
+            name: 'test',
+            measureUnit: 't',
+            qty: '1.00',
+            unitPrice: '25200.00',
+            totalAmount: '25200.00',
+            vat: '0.00',
+            barCode: '410',
+            cityTax: '0.00',
+          },
+        ],
+        bankTransactions: '',
+      },
+    ];
     AsyncStorage.setItem('eBarimtPostData', JSON.stringify(data));
 
-    // console.log('eBARIMT minut: ', localInfo.totalMinutes);
+    // console.log('eBARIMT minut: ', JSON.stringify(data));
     try {
       setSpin(true);
-      PayByCard.doData();
-      const res = await axios.post(config.eBarimtPut, data);
+      let link = config.eBarimtPut;
+      link = link.replace(/29/g, '26');
+      await PayByCard.doData();
+      const res = await axios.post(link, data);
+      // const res = await axios.post(`http://172.16.20.26:9000/bill/putArray`, data);
       setSpin(false);
 
       const obj = fixJson(res.data.outputResultInfoList[0]);
+      // console.log(obj);
       if (obj.success) {
         const printData = {
           ebarimt: {
@@ -335,8 +379,6 @@ const ShowPayment = (props) => {
           },
         };
         AsyncStorage.removeItem('eBarimtPostData');
-        // AsyncStorage.setItem('eBarimtPrintData', JSON.stringify(printData));
-        //Hevleh Native module aa duudnaa
         await PrintDiscount.printBarimt(JSON.stringify(printData));
         clearCache();
         props.navigation.pop();
@@ -347,11 +389,12 @@ const ShowPayment = (props) => {
       }
     } catch (e) {
       console.log('ebarimt post aldaa: ', e);
+      alert('НӨАТ баримт хэвлэхэд алдаа гарлаа');
       setSpin(false);
     }
   };
 
-  const postPaidLocal = (tmp) => {
+  const postPaidLocal = async (tmp) => {
     const data = {
       calculatedDate: localInfo.calculatedDate,
       checksum: localInfo.checksum,
@@ -386,7 +429,7 @@ const ShowPayment = (props) => {
     axios.defaults.headers.common = {
       Authorization: `Basic MTE0MDA1ODI2MzoxMTQwMDU4MjYz`,
     };
-    PayByCard.doWifi();
+    await PayByCard.doWifi();
     axios
       .post(config.localIp + ':6080/parking-local/paParkingTxn/paid', data)
       .then((res) => {
@@ -416,7 +459,7 @@ const ShowPayment = (props) => {
       });
   };
 
-  const postPaidServer = (paymentType) => {
+  const postPaidServer = async (paymentType,res) => {
     const data = {
       plateNumber: localInfo.plateNumber,
       enterDate: localInfo.enterDate,
@@ -438,10 +481,10 @@ const ShowPayment = (props) => {
       qrCodeMerchantId: qrState.paMerchant.merchantId,
       qrCodeParkingId: qrState.parkingId,
       //----------------------------------
-      svRrn: '000000000001', //params.invoice cardar tolson bol
-      xlsRrn: '0000000000002', //params.rrn //redpointoor tolson bol
+      svRrn: paymentType == 'CARD' ? res.rrn : null,//,'000000000001', //params.invoice cardar tolson bol  ENE 2IIN ALI REDPOINT ALI NI MONGO ESEHIIG ASUUJ TOHIRUULAH
+      xlsRrn: paymentType == 'CARD' ? res.invoice : null,//'0000000000002', //params.rrn //redpointoor tolson bol
       operDate: dateFormat(new Date(), 'yyyymmddHHMMss'),
-      operTerminalType: 'POSTPOS', //userRole-s hamaaruulj haruulnaa
+      operTerminalType: state.userRole, //userRole-s hamaaruulj haruulnaa
       operUserId: state.userId,
       totalMinutes: localInfo.totalMinutes,
       checksum: localInfo.checksum,
@@ -451,8 +494,9 @@ const ShowPayment = (props) => {
       Authorization: `Bearer ${state.token}`,
     };
 
-    PayByCard.doData();
+    await PayByCard.doData();
 
+    // console.log(config.apiMinu + '/parking/paParkingTxn/paid');
     setSpin(true);
     axios
       .post(config.apiMinu + '/parking/paParkingTxn/paid', data)
@@ -512,8 +556,8 @@ const ShowPayment = (props) => {
     setPayType((prev) => ({
       ...prev,
       type: 'CASH',
-      rrn: '',
-      // isPaid: true,
+      rrn: null,
+      invoice: null,
       paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
     }));
     cacheData('localInfo');
@@ -528,65 +572,70 @@ const ShowPayment = (props) => {
     );
   };
 
-  const payByCard = () => {
-    // NativeModules.PayByCard.pay(localInfo.totalAmount + '');
-    // svRrn: '000000000001', //params.invoice
-    // xlsRrn: '0000000000002', //params.rrn
+  const payByCard = async () => {
 
-    // cacheSteps(3);
-    // postPaidServer('CARD');
-    // setPayType((prev) => ({
-    //   ...prev,
-    //   type: 'CARD',
-    //   rrn: '0000000000001',
-    //   // isPaid: true,
-    //   paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
-    // }));
-    // cacheData('localInfo');
-    // AsyncStorage.setItem(
-    //   'payType',
-    //   JSON.stringify({
-    //     ...payType,
+    // NativeModules.PayByCard.pay(localInfo.totalAmount + '').then(res => {
+    //   // svRrn: '000000000001', //params.invoice
+    //   // xlsRrn: '0000000000002', //params.rrn
+    //   cacheSteps(3);
+    //   postPaidServer('CARD');
+    //   setPayType((prev) => ({
+    //     ...prev,
     //     type: 'CARD',
     //     rrn: '0000000000001',
+    //     // isPaid: true,
     //     paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
-    //   }),
-    // );
-
-    // parseInt(localInfo.totalAmount) - parseInt(qrState.amount) + '';
-
+    //   }));
+    //   cacheData('localInfo');
+    //   AsyncStorage.setItem(
+    //     'payType',
+    //     JSON.stringify({
+    //       ...payType,
+    //       type: 'CARD',
+    //       rrn: '0000000000001',
+    //       paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
+    //     }),
+    //   );
+    // })
     // ---------------------------------------------------------------------------------
-    // NativeModules.PayByCard.pay('100') .then(
-    const paidTest = (res) => {
-      // console.log('hariu2: ', res);
-      // if (res.code == 0) {
-      if (true) {
-        cacheSteps(3);
-        postPaidServer('CARD');
-        setPayType((prev) => ({
-          ...prev,
-          type: 'CARD',
-          rrn: '0000000000001',
-          invoice: '0000000000001',
-          // isPaid: true,
-          paidAmount:
-            parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
-        }));
-        cacheData('localInfo');
-        AsyncStorage.setItem(
-          'payType',
-          JSON.stringify({
-            ...payType,
+    // NativeModules.PayByCard.pay(parseInt(localInfo.totalAmount) - parseInt(qrState.amount) + '')
+    await PayByCard.doData();
+    NativeModules.PayByCard.pay('100')
+      .then((res) => {
+
+        console.log('hariu2: ', res);
+        // {"code": "-22", "description": "Гүйлгээ цуцлагдсан", "invoice": null, "rrn": ""}
+
+        if (res.code == 0) {
+          // if (true) {
+
+          cacheSteps(3);
+
+          postPaidServer('CARD',res);
+
+          setPayType((prev) => ({
+            ...prev,
             type: 'CARD',
-            rrn: '0000000000001',
-            paidAmount:
-              parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
-          }),
-        );
-      }
-    };
-    paidTest();
-    // ).catch((e) => console.log('cardaar toloh uyd aldaa garlaa', e));
+            rrn: '0000000000001', //res.rrn && res.rrn
+            invoice: '0000000000001', //res.invoice && res.invoice
+            paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
+          }));
+
+          cacheData('localInfo');
+
+          AsyncStorage.setItem(
+            'payType',
+            JSON.stringify({
+              ...payType,
+              type: 'CARD',
+              rrn: '0000000000001',
+              paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
+            }),
+          );
+        }
+      })
+      .catch((e) => console.log('cardaar toloh uyd aldaa garlaa', e));
+
   };
   const payDef = (type) => {
     if (type === 'CASH') payByCash();
@@ -614,7 +663,6 @@ const ShowPayment = (props) => {
   useEffect(() => {
     getPayInfo(route.params.id);
     return () => {
-      console.log('COMPONENT UNMOUNT CALLING!!!!!!!!');
       clearCache();
     };
   }, []);
@@ -657,18 +705,18 @@ const ShowPayment = (props) => {
           <View style={styles.row}>
             <Text style={styles.info}>Хөнгөлсөн дүн:</Text>
             <Text style={[styles.value, {color: 'green'}]}>
-              {qrState.amount}₮
+              {numberWithCommas(qrState.amount)}₮
             </Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.info}>Төлөх дүн:</Text>
             <Text style={styles.value}>
-              {parseInt(localInfo.totalAmount) - parseInt(qrState.amount)}₮
+              {numberWithCommas(parseInt(localInfo.totalAmount) - parseInt(qrState.amount))}₮
             </Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.info}>Төлөгдсөн дүн:</Text>
-            <Text style={styles.value}>{payType.paidAmount}₮</Text>
+            <Text style={styles.value}>{numberWithCommas(payType.paidAmount)}₮</Text>
           </View>
         </View>
         {payType.isPaid ? (
@@ -676,21 +724,23 @@ const ShowPayment = (props) => {
             <Text style={{color: 'green', fontSize: 20, marginBottom: 10}}>
               Амжилттай төлөгдлөө.
             </Text>
-            <Text>Баримт хэвлэх:</Text>
+            {/* <Text>:</Text> */}
             <PayButton
               red={false}
-              title="ХЭВЛЭ"
+              title="Баримт хэвлэх"
               onPress={() => setModal((prev) => ({...prev, show: true}))}
             />
           </View>
         ) : (
           <>
             <View style={styles.scan}>
-              <Text>Хөнгөлөлтийн хуудас уншуулах:</Text>
+              <Text style={{fontFamily: 'RobotoCondensed-Regular'}}>
+                Хөнгөлөлтийн хуудас уншуулах:
+              </Text>
               <ScannButton onPress={scanBarcode} />
             </View>
             <View style={styles.method}>
-              <Text style={{fontSize: 18}}>Төлбөр төлөх арга:</Text>
+              {/* <Text style={{fontSize: 18}}>Төлбөр төлөх арга:</Text> */}
               <View style={styles.buttons}>
                 {state.userRole === 'POSTPOS' && (
                   <PayButton
@@ -751,11 +801,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     backgroundColor: 'white',
     borderRadius: 10,
-    elevation: 10,
+    elevation: 5,
     paddingVertical: 30,
   },
   info: {
     fontSize: 13,
+    fontFamily: 'RobotoCondensed-Regular',
   },
   row: {
     flexDirection: 'row',
@@ -767,11 +818,12 @@ const styles = StyleSheet.create({
     height: '15%',
     // backgroundColor: 'pink',
     flexDirection: 'column',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
   },
   value: {
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
     fontSize: 13,
+    fontFamily: 'RobotoCondensed-Bold',
   },
   scan: {
     // backgroundColor: 'red',

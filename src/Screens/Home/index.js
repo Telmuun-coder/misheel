@@ -129,7 +129,10 @@ const Home = (props) => {
   };
   useEffect(() => {
     const checkCache = async () => {
-      const keys = await AsyncStorage.getAllKeys();
+      let keys = await AsyncStorage.getAllKeys();
+      // const simType = await AsyncStorage.getItem('simType');
+      // const localId = await AsyncStorage.getItem('localId');
+      keys = keys.filter(e => (e != 'simType' && e != 'localId'))
       const AlertBeforeGoBack = () =>
         Alert.alert(
           'Анхаар!',
@@ -167,6 +170,7 @@ const Home = (props) => {
     try {
       await PayByCard.doWifi();
       setSpin(true);
+      console.log(`${config.localIp}:6080/parking-local/paParkingTxn/currentCars`);
       const currentCars = await axios.get(
         `${config.localIp}:6080/parking-local/paParkingTxn/currentCars`,
       );
@@ -194,7 +198,7 @@ const Home = (props) => {
         `${config.localIp}:6080/parking-local/paParkingTxn/latestReadPlate`,
       );
       if (car.data.status == '000') {
-        console.log('Current Car: ', car.data.entity);
+        console.log('Current Car: ', car.data);
         setModal({
           data: car.data.entity,
           load: false,
@@ -215,23 +219,36 @@ const Home = (props) => {
     }
   };
 
-  useEffect(() => {
-    // axios
-    //   .get('http://192.168.160.240:9000/send/29')
-    //   .then((res) => console.log(res.data))
-    //   .catch((e) => console.log('3n honogt 1', e));
+  const ebarimtTurnOn = async () => {
+    // console.log('3 honogt 1');
+    await PayByCard.doData();
+    axios
+      .get('http://192.168.160.240:9000/send/29')
+      .then((res) => console.log(res.data))
+      .catch((e) => console.log('3n honogt 1', e));
+  };
+  // useEffect(() => {
+  //   ebarimtTurnOn();
+  // }, []);
 
+  useEffect(() => {
     getCurrentCars();
+    
     // return () => setData([]);
-  }, [isFocused]);
+  // }, [isFocused]);
+  }, []);
 
   const payByModal = () => {
     setModal((prev) => ({
       ...prev,
       visible: false,
     }));
-    // props.navigation.navigate('ShowPayment', {id: modal.data.txnId}); //eniig yg jinken testnii uyer idevhjuulne
-    props.navigation.navigate('ShowPayment', {id: '43'});
+    const exitingcar = data.find(e => e.plateNumber.toUpperCase() == modal.data.plateNumber.toUpperCase());
+
+    console.log(exitingcar);
+    if(exitingcar.txnId)
+      props.navigation.navigate('ShowPayment', {id: exitingcar.txnId});
+    else alert('Таны хайсан дугаарын мэдээлэл олдсонгүй.');
   };
 
   return (
@@ -244,67 +261,60 @@ const Home = (props) => {
       {/* <ScannButton onPress={scanBarcode} /> */}
       {/* </View> */}
       <StatusBar barStyle="dark-content" backgroundColor="transparent" />
-      {spin ? (
-        <Spinner visible={true} />
-      ) : (
-        <>
-          <Modal
-            animationType="fade"
-            transparent={true}
-            visible={modal.visible}>
-            <View
-              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <View
-                style={styles.shadow}
-                onStartShouldSetResponder={() =>
-                  setModal((prev) => ({...prev, visible: false}))
-                }
-              />
-              <View style={styles.ModalContainer}>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  style={styles.close}
-                  onPress={() =>
-                    setModal((prev) => ({...prev, visible: false}))
-                  }>
-                  <Icon name="ios-close" size={30} color="#7E7E7E" />
-                </TouchableOpacity>
-                <Text>Гарах машины дугаар:</Text>
-                {modal.load ? (
-                  <ActivityIndicator
-                    size="large"
-                    color="black"
-                    style={{marginTop: -80}}
-                  />
-                ) : (
-                  <>
-                    <Text style={styles.plateNumber}>
-                      {modal.data != null ? modal.data.plateNumber : '0000AAA'}
-                    </Text>
-                    <View style={styles.buttons}>
-                      <TouchableOpacity
-                        onPress={payByModal}
-                        style={[styles.miniBtn, {elevation: 3}]}>
-                        <Text style={styles.miniBtnTitle}>Төлөх</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.miniBtn} onPress={getCar}>
-                        <Text style={{fontSize: 16}}>Дахин шалгах</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </>
-                )}
-              </View>
-            </View>
-          </Modal>
-          <Controller
-            getCar={getCar}
-            onSearch={getCarNumber}
-            clearData={() => getCurrentCars()}
-            scanBarcode={scanBarcode}
+
+      <Controller
+        getCar={getCar}
+        onSearch={getCarNumber}
+        clearData={() => getCurrentCars()}
+        scanBarcode={scanBarcode}
+      />
+      <CarNumbers navigation={props.navigation} data={data} />
+
+      <Modal animationType="fade" transparent={true} visible={modal.visible}>
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <View
+            style={styles.shadow}
+            onStartShouldSetResponder={() =>
+              setModal((prev) => ({...prev, visible: false}))
+            }
           />
-          <CarNumbers navigation={props.navigation} data={data} />
-        </>
-      )}
+          <View style={styles.ModalContainer}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={styles.close}
+              onPress={() => setModal((prev) => ({...prev, visible: false}))}>
+              <Icon name="ios-close" size={30} color="#7E7E7E" />
+            </TouchableOpacity>
+            <Text>Гарах машины дугаар:</Text>
+            {modal.load ? (
+              <ActivityIndicator
+                size="large"
+                color="black"
+                style={{marginTop: -80}}
+              />
+            ) : (
+              <>
+                <Text style={styles.plateNumber}>
+                  {modal.data != null ? modal.data.plateNumber : '0000AAA'}
+                </Text>
+                <View style={styles.buttons}>
+                  <TouchableOpacity
+                    disabled={modal.data == null}
+                    onPress={payByModal}
+                    style={[styles.miniBtn, {elevation: 3}, modal.data == null && {opacity: 0.5}]}>
+                    <Text style={styles.miniBtnTitle}>Төлөх</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.miniBtn} onPress={getCar}>
+                    <Text style={{fontSize: 16}}>Дахин шалгах</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      <Spinner visible={spin} />
     </View>
   );
 };
@@ -336,7 +346,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'white',
     borderRadius: 8,
-    elevation: 5,
+    elevation: 3,
   },
   shadow: {
     //flex: 1,

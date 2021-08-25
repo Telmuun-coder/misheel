@@ -7,7 +7,7 @@ const WINDOWS_HEIGHT = Dimensions.get('window').height;
 
 const ScannButton = (props) => {
   return (
-    <TouchableOpacity style={styles.container} onPress={props.onPress}>
+    <TouchableOpacity style={styles.container} onPress={props.onPress} disabled={props.disabled}>
       <Icon name="qrcode" color="black" size={40} />
     </TouchableOpacity>
   );
@@ -24,7 +24,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     // backgroundColor: '#D81E21',
     backgroundColor: 'white',
-    elevation: 10,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: 'gray',
+    // elevation: 5,
   },
   text: {
     color: '#FEFDFF',
