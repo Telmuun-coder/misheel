@@ -14,6 +14,8 @@ target 'Parking' do
 
   pod 'react-native-view-shot', :path => '../node_modules/react-native-view-shot'
 
+  pod 'react-native-netinfo', :path => '../node_modules/@react-native-community/netinfo'
+
   target 'ParkingTests' do
     inherit! :complete
     # Pods for testing

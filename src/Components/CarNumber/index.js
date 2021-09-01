@@ -6,7 +6,7 @@ const CarNumber = (props) => {
     <TouchableOpacity
       style={styles.container}
       onPress={() =>
-        props.navigation.navigate('ShowPayment', {id: props.data.txnId})
+        props.navigation.navigate('ShowPayment', {id: props.data.txnId, deleteById: () => props.deleteById(props.data.txnId)})
       }
       // onPress={() => props.navigation.push('Payment')}
     >

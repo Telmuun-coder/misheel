@@ -16,7 +16,7 @@ const CarNumbers = (props) => {
       }}>
       <View style={styles.carNumbers}>
         {props.data.map((e, i) => (
-          <CarNumber navigation={props.navigation} data={e} key={i} />
+          <CarNumber navigation={props.navigation} data={e} key={i} deleteById={props.deleteById}/>
         ))}
       </View>
     </ScrollView>

@@ -6,6 +6,7 @@ import {
   NativeModules,
   Dimensions,
   Alert,
+  BackHandler
 } from 'react-native';
 import {useRoute} from '@react-navigation/native';
 import axios from 'axios';
@@ -18,6 +19,7 @@ import ScannButton from '../../Components/ScannButton';
 import Spinner from '../../Components/Spinner';
 import Ebarimt from '../../Components/EbarimtModal';
 import Header from '../../Components/Header';
+import NetInfo from "@react-native-community/netinfo";
 
 
 function numberWithCommas(x) {
@@ -37,6 +39,7 @@ const windowHeight = Dimensions.get('window').height;
 
 const ShowPayment = (props) => {
   const {PrintDiscount, PayByCard} = NativeModules;
+  // const [tolow, setTolow] = useState(null);
   const {state} = useContext(UserState);
   const [modal, setModal] = useState({
     show: false,
@@ -96,6 +99,7 @@ const ShowPayment = (props) => {
           text: 'ТИЙМ',
           onPress: () => {
             clearCache();
+            route.params.deleteById();
             props.navigation.goBack();
           },
         },
@@ -109,7 +113,6 @@ const ShowPayment = (props) => {
     tmpSteps.steps.push(step);
     setLocalState({...tmpSteps});
     await AsyncStorage.setItem('localState', JSON.stringify(tmpSteps));
-    // console.log('steps:', await AsyncStorage.getItem('localState'));
   };
 
   const cacheData = async (name, data, wait = false) => {
@@ -122,15 +125,6 @@ const ShowPayment = (props) => {
   };
 
   const clearCache = async () => {
-    console.log('clearing cache');
-    // let tmpSteps = localState;
-    // tmpSteps.steps[(1, 3, 4)];
-    // // setLocalState({...tmpSteps});
-    // await AsyncStorage.setItem('localState', JSON.stringify(tmpSteps));
-    // let tmpPaytype = payType;
-    // tmpPaytype.isPaid = false;
-    // await AsyncStorage.setItem('payType', JSON.stringify(tmpPaytype));
-
     await AsyncStorage.multiRemove([
       'localState',
       'localInfo',
@@ -139,7 +133,7 @@ const ShowPayment = (props) => {
       'qrState',
     ]);
     console.log('cleared');
-    console.log('checkData:', await AsyncStorage.getItem('payType'));
+    // console.log('checkData:', await AsyncStorage.getItem('payType'));
   };
 
   const scanBarcode = (props) => {
@@ -155,8 +149,6 @@ const ShowPayment = (props) => {
       })
       .catch((e) => {
         console.log('qr code unshij ehleh uyd alda garlaa: ', e);
-        // this.props.navigation.navigate('CheckoutBarcodeScan', {
-        //   callback: this.onBarcodeScan,
       });
   };
 
@@ -201,6 +193,7 @@ const ShowPayment = (props) => {
 
   const getPayInfo = async (txnId) => {
     if (!txnId) {
+      // setTolow('notNormal');
       const cache = await AsyncStorage.multiGet([
         'localState',
         'localInfo',
@@ -214,8 +207,10 @@ const ShowPayment = (props) => {
         if (e[1])
           switch (e[0]) {
             case 'localState':
-              setLocalState(JSON.parse(e[1]));
-              break;
+              {
+              setLocalState(JSON.parse(e[1])); 
+              console.log(e[1]);
+              } break;
             case 'qrState':
               setQrState(JSON.parse(e[1]));
               break;
@@ -235,6 +230,7 @@ const ShowPayment = (props) => {
       setSpin(false);
       return;
     } else {
+      // setTolow('normal');
       axios.defaults.headers.common = {
         Authorization: `Basic MTE0MDA1ODI2MzoxMTQwMDU4MjYz`,
       };
@@ -278,7 +274,7 @@ const ShowPayment = (props) => {
 
     const data = [
       {
-        organization_id: 29, //eniig login hiihed awaad useStore-s awna
+        organization_id: state.organization_id, //eniig login hiihed awaad useStore-s awna
         amount: amount,
         vat: vat,
         cashAmount: payType.type == 'CASH' ? amount : '0.00',
@@ -381,6 +377,7 @@ const ShowPayment = (props) => {
         AsyncStorage.removeItem('eBarimtPostData');
         await PrintDiscount.printBarimt(JSON.stringify(printData));
         clearCache();
+        route.params.deleteById();
         props.navigation.pop();
       } else {
         //aldaag haruulaad dahin oroldoh bolomj olgohiimu yaahy ahha
@@ -393,6 +390,13 @@ const ShowPayment = (props) => {
       setSpin(false);
     }
   };
+
+  const doneWithoutEbarimt = () => {
+//   console.log(state.organization_id);
+    route.params.deleteById();
+    clearCache();
+    props.navigation.pop();
+  }
 
   const postPaidLocal = async (tmp) => {
     const data = {
@@ -460,6 +464,11 @@ const ShowPayment = (props) => {
   };
 
   const postPaidServer = async (paymentType,res) => {
+    const netState = await NetInfo.fetch();
+    if(!netState.isConnected) {
+      alert('Та 4G сүлжээгээ шалгана уу.');
+      return;
+    }
     const data = {
       plateNumber: localInfo.plateNumber,
       enterDate: localInfo.enterDate,
@@ -481,8 +490,8 @@ const ShowPayment = (props) => {
       qrCodeMerchantId: qrState.paMerchant.merchantId,
       qrCodeParkingId: qrState.parkingId,
       //----------------------------------
-      svRrn: paymentType == 'CARD' ? res.rrn : null,//,'000000000001', //params.invoice cardar tolson bol  ENE 2IIN ALI REDPOINT ALI NI MONGO ESEHIIG ASUUJ TOHIRUULAH
-      xlsRrn: paymentType == 'CARD' ? res.invoice : null,//'0000000000002', //params.rrn //redpointoor tolson bol
+      svRrn: paymentType == 'CARD' ? res ? res.rrn : payType.rrn : null,//,'000000000001', //params.invoice cardar tolson bol  ENE 2IIN ALI REDPOINT ALI NI MONGO ESEHIIG ASUUJ TOHIRUULAH
+      xlsRrn: paymentType == 'CARD' ? res ? res.invoice : payType.invoice : null,//'0000000000002', //params.rrn //redpointoor tolson bol
       operDate: dateFormat(new Date(), 'yyyymmddHHMMss'),
       operTerminalType: state.userRole, //userRole-s hamaaruulj haruulnaa
       operUserId: state.userId,
@@ -598,20 +607,20 @@ const ShowPayment = (props) => {
     //   );
     // })
     // ---------------------------------------------------------------------------------
-    // NativeModules.PayByCard.pay(parseInt(localInfo.totalAmount) - parseInt(qrState.amount) + '')
-    await PayByCard.doData();
-    NativeModules.PayByCard.pay('100')
+    // await PayByCard.doData();
+    NativeModules.PayByCard.pay(parseInt(localInfo.totalAmount) - parseInt(qrState.amount) + '')
+    // NativeModules.PayByCard.pay('100')
       .then((res) => {
 
         console.log('hariu2: ', res);
         // {"code": "-22", "description": "Гүйлгээ цуцлагдсан", "invoice": null, "rrn": ""}
 
-        if (res.code == 0) {
-          // if (true) {
+        // if (res.code == 0) {
+          if (true) {
 
           cacheSteps(3);
 
-          postPaidServer('CARD',res);
+          // postPaidServer('CARD',res);
 
           setPayType((prev) => ({
             ...prev,
@@ -660,12 +669,64 @@ const ShowPayment = (props) => {
     }
   };
 
+  const backAction = () => {
+    // console.log("TOLSONUUU:", payType.isPaid);
+    if(payType.isPaid) {
+      AlertBeforeGoBack();
+      return true;
+    }
+    return false;
+  };
+
   useEffect(() => {
+    const backHandler = BackHandler.addEventListener("hardwareBackPress",backAction);
     getPayInfo(route.params.id);
     return () => {
+      backHandler.remove();
       clearCache();
     };
   }, []);
+
+  // const continueStep = () => {
+  //   setTolow('normal');
+  //   payStep();
+  // }
+
+
+  const Actions = () => {
+    // if(tolow == 'normal')
+    return(
+      <>
+        {payType.isPaid ? (
+          <View style={styles.scan}>
+            <Text style={{color: 'green', fontSize: 20, marginBottom: 10}}>
+              Амжилттай төлөгдлөө.
+            </Text>
+            {  state.organization_id
+                ? <PayButton red={false} title="Баримт хэвлэх" onPress={() => setModal((prev) => ({...prev, show: true}))} />
+                : <PayButton red={false} title="БОЛСОН" onPress={doneWithoutEbarimt} /> } 
+          </View>
+        ) : (
+          <>
+            <View style={styles.scan}>
+              <Text style={{fontFamily: 'RobotoCondensed-Regular'}}>
+                Хөнгөлөлтийн хуудас уншуулах:
+              </Text>
+              <ScannButton onPress={scanBarcode} />
+            </View>
+            <View style={styles.method}>
+              <View style={styles.buttons}>
+                {state.userRole === 'POSTPOS' && (  <PayButton red={true} onPress={() => payStep('CASH')}/>)}
+                <PayButton red={false} onPress={() => payStep('CARD')}/>
+              </View>
+            </View>
+          </>
+        )}
+      </>
+    )
+    // else 
+    // return <PayButton red={false} title="Үргэлжлүүлэх" onPress={continueStep} />;
+  }
 
   return (
     <>
@@ -719,50 +780,7 @@ const ShowPayment = (props) => {
             <Text style={styles.value}>{numberWithCommas(payType.paidAmount)}₮</Text>
           </View>
         </View>
-        {payType.isPaid ? (
-          <View style={styles.scan}>
-            <Text style={{color: 'green', fontSize: 20, marginBottom: 10}}>
-              Амжилттай төлөгдлөө.
-            </Text>
-            {/* <Text>:</Text> */}
-            <PayButton
-              red={false}
-              title="Баримт хэвлэх"
-              onPress={() => setModal((prev) => ({...prev, show: true}))}
-            />
-          </View>
-        ) : (
-          <>
-            <View style={styles.scan}>
-              <Text style={{fontFamily: 'RobotoCondensed-Regular'}}>
-                Хөнгөлөлтийн хуудас уншуулах:
-              </Text>
-              <ScannButton onPress={scanBarcode} />
-            </View>
-            <View style={styles.method}>
-              {/* <Text style={{fontSize: 18}}>Төлбөр төлөх арга:</Text> */}
-              <View style={styles.buttons}>
-                {state.userRole === 'POSTPOS' && (
-                  <PayButton
-                    red={true}
-                    onPress={() =>
-                      // payByCash()
-                      payStep('CASH')
-                    }
-                  />
-                )}
-                <PayButton
-                  red={false}
-                  onPress={() =>
-                    // payByCard()
-                    payStep('CARD')
-                  }
-                  // onPress={() => setModal((prev) => ({...prev, show: true}))}
-                />
-              </View>
-            </View>
-          </>
-        )}
+        <Actions/>
       </View>
     </>
   );

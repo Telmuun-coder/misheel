@@ -23,6 +23,7 @@ import {UserState} from '../../Context/UserStore';
 import Spinner from '../../Components/Spinner';
 import config from '../../../config';
 import ScannButton from '../../Components/ScannButton';
+import dateFormat from 'dateformat';
 
 const {width, height} = Dimensions.get('window');
 
@@ -35,7 +36,7 @@ const Home = (props) => {
     data: {},
   });
   const [modalLoader, setModalLoader] = useState(true);
-  const {setStater} = useContext(UserState);
+  const {setStater, state} = useContext(UserState);
   const [data, setData] = useState([]);
   const isFocused = useIsFocused();
 
@@ -52,8 +53,6 @@ const Home = (props) => {
       })
       .catch((e) => {
         console.log('qr code unshij ehleh uyd alda garlaa: ', e);
-        // this.props.navigation.navigate('CheckoutBarcodeScan', {
-        //   callback: this.onBarcodeScan,
       });
   };
 
@@ -75,16 +74,6 @@ const Home = (props) => {
         setSpin(false);
         if (res.data.message === 'Амжилттай') {
           console.log(qr);
-          // cacheSteps(2);
-          // cacheData('qrState', {...res.data.entity});
-          // AsyncStorage.setItem(
-          //   'qrState',
-          //   JSON.stringify({...qrState, ...res.data.entity}),
-          // );
-          // setQrState((prev) => ({
-          //   ...prev,
-          //   ...res.data.entity,
-          // }));
         } else {
           console.log('qrCheck response Error: ', res.data);
           alert('QR шалгах: ' + res.data.message);
@@ -114,7 +103,6 @@ const Home = (props) => {
         .then((res) => {
           setSpin(false);
           if (res.data.message === 'Амжилттай') {
-            // console.log('reallyMe', res.data.message);
             setData([...res.data.entity]);
           } else {
             alert(res.data.message);
@@ -127,41 +115,7 @@ const Home = (props) => {
         });
     }
   };
-  useEffect(() => {
-    const checkCache = async () => {
-      let keys = await AsyncStorage.getAllKeys();
-      // const simType = await AsyncStorage.getItem('simType');
-      // const localId = await AsyncStorage.getItem('localId');
-      keys = keys.filter(e => (e != 'simType' && e != 'localId'))
-      const AlertBeforeGoBack = () =>
-        Alert.alert(
-          'Анхаар!',
-          'Та өмнө нь төлбөр төлөх процессийг гүйцээгээгүй байна. Та үүнийг гүйцээх үү?',
-          [
-            {
-              text: 'ҮГҮЙ',
-              onPress: async () => {
-                await AsyncStorage.multiRemove(
-                  keys.filter((e) => e !== 'state'),
-                );
-              },
-              style: 'cancel',
-            },
-            {
-              text: 'ТИЙМ',
-              onPress: () => {
-                props.navigation.navigate('ShowPayment', {id: null});
-              },
-            },
-          ],
-          {cancelable: false},
-        );
-      if (keys.length > 1) {
-        AlertBeforeGoBack();
-      }
-    };
-    checkCache();
-  }, []);
+
 
   const getCurrentCars = async () => {
     axios.defaults.headers.common = {
@@ -174,7 +128,7 @@ const Home = (props) => {
       const currentCars = await axios.get(
         `${config.localIp}:6080/parking-local/paParkingTxn/currentCars`,
       );
-      // console.log('Current Cars: ', currentCars.data.entity);
+      // console.log('reallyMe', currentCars.data.entity[1]);
       setData([...currentCars.data.entity]);
       setSpin(false);
     } catch (error) {
@@ -182,6 +136,7 @@ const Home = (props) => {
       setSpin(false);
     }
   };
+
   const getCar = async () => {
     setModal({
       data: {},
@@ -220,22 +175,55 @@ const Home = (props) => {
   };
 
   const ebarimtTurnOn = async () => {
-    // console.log('3 honogt 1');
+    const eBarimt = await AsyncStorage.getItem('isCalled');
+    if(dateFormat(new Date(eBarimt), 'yyyy-mm-dd') == dateFormat(new Date(), 'yyyy-mm-dd')) return;
+
+    // axios.defaults.headers.common = { Authorization: null };
+    console.log('sending 3: ',`http://192.168.160.240:9000/send/${state.organization_id}`);
     await PayByCard.doData();
-    axios
-      .get('http://192.168.160.240:9000/send/29')
-      .then((res) => console.log(res.data))
+    axios.get(`http://192.168.160.240:9000/send/${state.organization_id}`, { headers: { Authorization: null }})
+      .then((res) => {
+        AsyncStorage.setItem('isCalled', dateFormat(new Date(), 'yyyy-mm-dd'));
+      })
       .catch((e) => console.log('3n honogt 1', e));
   };
-  // useEffect(() => {
-  //   ebarimtTurnOn();
-  // }, []);
 
   useEffect(() => {
+
+    const checkCache = async () => {
+      let keys = await AsyncStorage.getAllKeys();
+      keys = keys.filter(e => (e != 'simType' && e != 'localId' && e != 'isCalled'))
+      const AlertBeforeGoBack = () =>
+        Alert.alert(
+          'Анхаар!',
+          'Та өмнө нь төлбөр төлөх процессийг гүйцээгээгүй байна. Та үүнийг гүйцээх үү?',
+          [
+            {
+              text: 'ҮГҮЙ',
+              onPress: async () => {
+                await AsyncStorage.multiRemove(
+                  keys.filter((e) => e !== 'state'),
+                );
+              },
+              style: 'cancel',
+            },
+            {
+              text: 'ТИЙМ',
+              onPress: () => {
+                props.navigation.navigate('ShowPayment', {id: null, deleteById: () => deleteById(0)});
+              },
+            },
+          ],
+          {cancelable: false},
+        );
+      if (keys.length > 1) {
+        AlertBeforeGoBack();
+      }
+    };
+    checkCache();
+
     getCurrentCars();
-    
-    // return () => setData([]);
-  // }, [isFocused]);
+    // ebarimtTurnOn();
   }, []);
 
   const payByModal = () => {
@@ -247,9 +235,13 @@ const Home = (props) => {
 
     console.log(exitingcar);
     if(exitingcar.txnId)
-      props.navigation.navigate('ShowPayment', {id: exitingcar.txnId});
+      props.navigation.navigate('ShowPayment', {id: exitingcar.txnId, deleteById: () => deleteById(exitingcar.txnId)});
     else alert('Таны хайсан дугаарын мэдээлэл олдсонгүй.');
   };
+
+  const deleteById = (id) => {
+    setData(prev => (prev.filter(e => e.txnId != id)));
+  }
 
   return (
     <View style={styles.container}>
@@ -268,7 +260,7 @@ const Home = (props) => {
         clearData={() => getCurrentCars()}
         scanBarcode={scanBarcode}
       />
-      <CarNumbers navigation={props.navigation} data={data} />
+      <CarNumbers navigation={props.navigation} data={data} deleteById={deleteById}/>
 
       <Modal animationType="fade" transparent={true} visible={modal.visible}>
         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>

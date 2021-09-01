@@ -14,6 +14,7 @@ const UserStore = (props) => {
   const [state, setState] = useState({
     userRole: null,
     token: null,
+    organization_id: null,
     userId: null,
     error: null,
     parkingId: null,
@@ -50,7 +51,8 @@ const UserStore = (props) => {
             user,
           );
           if (res.data.message === 'Амжилттай') {
-            console.log(res.data.entity);
+            // console.log("loginData:",JSON.stringify(res.data.entity));
+            console.log("ORG ID:",res.data.entity.paUser.paParkingList[0].organizationId);
             let tmp = {
               error: null,
               token: res.data.entity.token,
@@ -60,6 +62,7 @@ const UserStore = (props) => {
               parkingList: res.data.entity.paUser.paParkingList,
               parkingId: res.data.entity.paUser.paParkingList[0].parkingId,
               userRole: res.data.entity.paUser.paRoleList[0].code,
+              organization_id: res.data.entity.paUser.paParkingList[0].organizationId
             };
             remember === 'had' && cacheState(tmp);
             setStaterAll(tmp);
@@ -107,7 +110,7 @@ const UserStore = (props) => {
       const prevState = await AsyncStorage.getItem('state');
       if (prevState != null) {
         const tmp = JSON.parse(prevState);
-        setState(tmp);
+        setState({...tmp});
         // setRem('had');
         // console.log('backUp', tmp);
       }

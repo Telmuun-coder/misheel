@@ -1,4 +1,4 @@
-import React, {useState, useLayoutEffect, useRef} from 'react';
+import React, {useState, useLayoutEffect, useRef, useContext} from 'react';
 import {
   TouchableHighlight,
   StyleSheet,
@@ -10,21 +10,20 @@ import {
 import config, {setIp, setSimcard, sim} from '../../../config';
 import AsyncStorage from '@react-native-community/async-storage';
 import RadioPIcker from '../../Components/RadioPIcker';
+import { UserState } from '../../Context/UserStore';
 
 const {width, height} = Dimensions.get('window');
 
 const Settings = ({navigation}) => {
   const pickerRef = useRef(null);
-  const [state, setState] = useState({
-    // localIp: config.localIp.slice(7, config.localIp.length),
-    localIp: null,
-  });
-const [companyId, setCompanyId] = useState(null);
+  const {setStater, state} = useContext(UserState);
+  const [localIp, setLocalIp] = useState(null);
+// const [companyId, setCompanyId] = useState(null);
   const [nonValid, setNonValid] = useState(false);
   const [sim, setSim] = useState(null);
   //   console.log()
   const valid = (localIp) => {
-    setState((prev) => ({...prev, localIp: localIp}));
+    setLocalIp(localIp);
     // if (localIp.match(/\./g).length == 4) setNonValid(false);
     // else setNonValid(true);
   };
@@ -36,11 +35,11 @@ const [companyId, setCompanyId] = useState(null);
 
   const handleSave = () => {
     if (nonValid) return;
-
-    setIp(state.localIp);
+    // setStater('organization_id',companyId);    
+    setIp(localIp);
     navigation.goBack();
-    // navigation.navigate('Home');
   };
+
 
   useLayoutEffect(()=>{
     const getInitValue = async () => {
@@ -52,7 +51,10 @@ const [companyId, setCompanyId] = useState(null);
         setSim(simType);
         pickerRef.current.setTypeValue(simType);
       }; 
-      if(localIp) setState({localIp});
+      if(localIp) setLocalIp(localIp);
+
+
+      // setCompanyId(state.organization_id);
     }
     getInitValue();
   },[])
@@ -66,14 +68,14 @@ const [companyId, setCompanyId] = useState(null);
           style={styles.input}
           placeholder="0.0.0.0"
           maxLength={15}
-          value={state.localIp}
+          value={localIp}
           keyboardType="number-pad"
           // onSubmitEditing={handleSave}
           onChangeText={(val) => valid(val)}
         />
       </View>
 
-      <View style={styles.row}>
+      {/* <View style={styles.row}>
         <Text style={styles.title}>Байгууллагын {'\n'}дугаар:</Text>
         <TextInput
           textAlign="center"
@@ -85,8 +87,9 @@ const [companyId, setCompanyId] = useState(null);
           // onSubmitEditing={handleSave}
           onChangeText={(id) => setCompanyId(id)}
         />
-        </View>
-        <RadioPIcker simType={sim} onPress={changeSim} ref={pickerRef}/>
+      </View> */}
+
+      <RadioPIcker simType={sim} onPress={changeSim} ref={pickerRef}/>
     
       <TouchableHighlight
         style={[styles.btnSave, nonValid && styles.dis]}
