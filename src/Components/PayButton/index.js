@@ -1,9 +1,10 @@
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity} from 'react-native';
 
-const PayButton = ({red, style, title, onPress}) => {
+const PayButton = ({red, style, title, onPress, disabled}) => {
   return (
     <TouchableOpacity
+      disabled={disabled}
       onPress={onPress}
       style={[styles.container, !red && {backgroundColor: 'black'}, style]}>
       <Text style={styles.text}>

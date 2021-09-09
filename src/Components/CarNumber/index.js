@@ -1,5 +1,7 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {StyleSheet, Text, TouchableOpacity, View, Dimensions} from 'react-native';
+
+const {width, height} = Dimensions.get('window');
 
 const CarNumber = (props) => {
   return (
@@ -8,7 +10,6 @@ const CarNumber = (props) => {
       onPress={() =>
         props.navigation.navigate('ShowPayment', {id: props.data.txnId, deleteById: () => props.deleteById(props.data.txnId)})
       }
-      // onPress={() => props.navigation.push('Payment')}
     >
       <Text style={styles.number}>{props.data.plateNumber}</Text>
     </TouchableOpacity>
@@ -36,6 +37,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 2,
     marginVertical: 5,
+    marginHorizontal: (width*.9 - 130*2)/4
   },
   number: {
     fontSize: 20,

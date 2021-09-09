@@ -25,12 +25,14 @@ const Ebarimt = (props) => {
   });
 
   const hevleh = () => {
+    const reg = /^\d+$/;
     if (state.type == 'org') {
-      if (state.register.length != 7 && state.register.length != 10)
-        setState((prev) => ({...prev, valid: true}));
-      else {
+      if (reg.test(state.register) && (state.register.length == 7 || state.register.length == 10)) {
         props.setShowModal({show: false, ...state});
         props.printEbarimt(state);
+      }
+      else {
+        setState((prev) => ({...prev, valid: true}));
       }
     } else {
       props.setShowModal({show: false, ...state});
@@ -61,6 +63,7 @@ const Ebarimt = (props) => {
             max={10}
             title="Register"
             danger={state.valid}
+            type={'number'}
             register={true}
             onChange={(e) => setState((prev) => ({...prev, register: e}))}
           />

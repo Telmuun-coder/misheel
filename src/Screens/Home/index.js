@@ -91,9 +91,10 @@ const Home = (props) => {
       axios.defaults.headers.common = {
         Authorization: `Basic MTE0MDA1ODI2MzoxMTQwMDU4MjYz`,
       };
-      PayByCard.doWifi().then((e) => console.log('iim ym ogjin ugsasa:', e));
+      await PayByCard.doWifi();
 
       setSpin(true);
+      console.log("searching: ", config.localIp +':6080/parking-local/paParkingTxn/findByPlateNumber?plateNumber=' + number);
       axios
         .get(
           config.localIp +
@@ -124,11 +125,12 @@ const Home = (props) => {
     try {
       await PayByCard.doWifi();
       setSpin(true);
-      console.log(`${config.localIp}:6080/parking-local/paParkingTxn/currentCars`);
+      // console.log(`${config.localIp}:6080/parking-local/paParkingTxn/currentCars`);
       const currentCars = await axios.get(
         `${config.localIp}:6080/parking-local/paParkingTxn/currentCars`,
       );
       // console.log('reallyMe', currentCars.data.entity[1]);
+
       setData([...currentCars.data.entity]);
       setSpin(false);
     } catch (error) {
@@ -175,14 +177,16 @@ const Home = (props) => {
   };
 
   const ebarimtTurnOn = async () => {
+    let link = config.send;
+    link = link.replace(/29/g, '26');
     const eBarimt = await AsyncStorage.getItem('isCalled');
     if(dateFormat(new Date(eBarimt), 'yyyy-mm-dd') == dateFormat(new Date(), 'yyyy-mm-dd')) return;
 
-    // axios.defaults.headers.common = { Authorization: null };
-    console.log('sending 3: ',`http://192.168.160.240:9000/send/${state.organization_id}`);
     await PayByCard.doData();
-    axios.get(`http://192.168.160.240:9000/send/${state.organization_id}`, { headers: { Authorization: null }})
+    axios.get(link + state.organization_id, { headers: { Authorization: null }})
       .then((res) => {
+        // res.data.success
+        console.log("e barimt send: ", res.data);
         AsyncStorage.setItem('isCalled', dateFormat(new Date(), 'yyyy-mm-dd'));
       })
       .catch((e) => console.log('3n honogt 1', e));
@@ -223,20 +227,57 @@ const Home = (props) => {
     checkCache();
 
     getCurrentCars();
-    // ebarimtTurnOn();
+    ebarimtTurnOn();
   }, []);
+
+  const getExiting = async (platenumber) => {
+    axios.defaults.headers.common = {
+      Authorization: `Basic MTE0MDA1ODI2MzoxMTQwMDU4MjYz`,
+    };
+
+    await PayByCard.doWifi();
+
+    setSpin(true);
+    axios
+      .get(
+        config.localIp +
+          ':6080/parking-local/paParkingTxn/findByPlateNumber?plateNumber=' +
+          platenumber,
+      )
+      .then((res) => {
+        setSpin(false);
+        if (res.data.message === 'Амжилттай') {
+          // console.log("getone: ", res.data.entity[0].txnId);
+          // res.data.entity.plateNumber
+          props.navigation.navigate('ShowPayment', {id: res.data.entity[0].txnId, deleteById: () => deleteById(res.data.entity[0].txnId)});
+        } else {
+          alert(res.data.message);
+        }
+      })
+      .catch((e) => {
+        console.log('getExiting aldaa', e.message);
+        setSpin(false);
+        alert(e.message);
+      });
+  }
 
   const payByModal = () => {
     setModal((prev) => ({
       ...prev,
       visible: false,
     }));
-    const exitingcar = data.find(e => e.plateNumber.toUpperCase() == modal.data.plateNumber.toUpperCase());
+    console.log("modal data plate number: ", modal.data.plateNumber);
+    getExiting(modal.data.plateNumber);
 
-    console.log(exitingcar);
-    if(exitingcar.txnId)
-      props.navigation.navigate('ShowPayment', {id: exitingcar.txnId, deleteById: () => deleteById(exitingcar.txnId)});
-    else alert('Таны хайсан дугаарын мэдээлэл олдсонгүй.');
+    // let exitingcar = data.find(e => e.plateNumber.toUpperCase() == modal.data.plateNumber.toUpperCase());
+
+    // console.log("exiting car: ", exitingcar);
+    // if(exitingcar)
+    //   props.navigation.navigate('ShowPayment', {id: exitingcar.txnId, deleteById: () => deleteById(exitingcar.txnId)});
+    // else {
+    //   // alert('Таны хайсан дугаарын мэдээлэл олдсонгүй.');
+    //   getExiting(modal.data.plateNumber);
+    // }
   };
 
   const deleteById = (id) => {
@@ -260,7 +301,7 @@ const Home = (props) => {
         clearData={() => getCurrentCars()}
         scanBarcode={scanBarcode}
       />
-      <CarNumbers navigation={props.navigation} data={data} deleteById={deleteById}/>
+      <CarNumbers navigation={props.navigation} data={data} deleteById={deleteById} onEndReached={() => console.log("reaching")}/>
 
       <Modal animationType="fade" transparent={true} visible={modal.visible}>
         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>

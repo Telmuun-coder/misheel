@@ -63,6 +63,7 @@ const UserStore = (props) => {
               parkingId: res.data.entity.paUser.paParkingList[0].parkingId,
               userRole: res.data.entity.paUser.paRoleList[0].code,
               organization_id: res.data.entity.paUser.paParkingList[0].organizationId
+              // organization_id: 29
             };
             remember === 'had' && cacheState(tmp);
             setStaterAll(tmp);

@@ -6,7 +6,8 @@ import {
   NativeModules,
   Dimensions,
   Alert,
-  BackHandler
+  BackHandler,
+  LogBox
 } from 'react-native';
 import {useRoute} from '@react-navigation/native';
 import axios from 'axios';
@@ -38,6 +39,9 @@ const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
 const ShowPayment = (props) => {
+  LogBox.ignoreLogs([
+    'Non-serializable values were found in the navigation state',
+  ]);
   const {PrintDiscount, PayByCard} = NativeModules;
   // const [tolow, setTolow] = useState(null);
   const {state} = useContext(UserState);
@@ -247,6 +251,7 @@ const ShowPayment = (props) => {
               steps: [1],
               downtime: convertMinuteToTime(res.data.entity.totalMinutes),
             }));
+            console.log(JSON.stringify(res.data.entity));
             setLocalInfo({
               localTxnId: res.data.entity.txnId,
               plateNumber: res.data.entity.plateNumber,
@@ -272,6 +277,7 @@ const ShowPayment = (props) => {
     amount = (Math.round(amount * 100) / 100).toFixed(2);
     const vat = (Math.round((amount / 11) * 100) / 100).toFixed(2);
 
+    console.log("customerNo: ", info.register);
     const data = [
       {
         organization_id: state.organization_id, //eniig login hiihed awaad useStore-s awna
@@ -282,12 +288,12 @@ const ShowPayment = (props) => {
         cityTax: '0.00', //eniig shiideeee
         districtCode: state.parkingList[0].districtCode,
         posNo: '', //
-        customerNo: info.register,
-        billType: '1',
+        customerNo: info.type == 'org' ? `${info.register}` : '',
+        billType: info.type == 'org' ? '3' : '1',
         billIdSuffix: '',
         returnBillId: '',
         taxType: '1',
-        invoiceId: payType.rrn ? payType.rrn : null, //payType.rrn, eniig tolboroo yg tolbog bolgochood holboh
+        invoiceId: '',//payType.rrn ? payType.rrn : null, //payType.rrn, eniig tolboroo yg tolbog bolgochood holboh
         reportMount: dateFormat(new Date(), 'yyyy-mm'),
         branchNo: '001', //back-endes l awah bhda
         stocks: [
@@ -343,7 +349,7 @@ const ShowPayment = (props) => {
     ];
     AsyncStorage.setItem('eBarimtPostData', JSON.stringify(data));
 
-    // console.log('eBARIMT minut: ', JSON.stringify(data));
+    console.log('SENDING: ', JSON.stringify(data));
     try {
       setSpin(true);
       let link = config.eBarimtPut;
@@ -374,7 +380,8 @@ const ShowPayment = (props) => {
             qrData: serverInfo.paymentQr,
           },
         };
-        AsyncStorage.removeItem('eBarimtPostData');
+        console.log('PRINTING: ', JSON.stringify(data));
+        AsyncStorage.removeItem('eBarimtPostData');  
         await PrintDiscount.printBarimt(JSON.stringify(printData));
         clearCache();
         route.params.deleteById();
@@ -472,7 +479,7 @@ const ShowPayment = (props) => {
     const data = {
       plateNumber: localInfo.plateNumber,
       enterDate: localInfo.enterDate,
-      exitDate: null,
+      exitDate: `${localInfo.calculatedDate.slice(0,4)}-${localInfo.calculatedDate.slice(4,6)}-${localInfo.calculatedDate.slice(6,8)} ${localInfo.calculatedDate.slice(8,10)}:${localInfo.calculatedDate.slice(10,12)}:${localInfo.calculatedDate.slice(12,14)}`, //yyyy-MM-dd HH:mm:ss  2021 09 02 19 03 27
       totalAmount: localInfo.totalAmount,
       discountAmount: qrState.amount,
       paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
@@ -490,8 +497,8 @@ const ShowPayment = (props) => {
       qrCodeMerchantId: qrState.paMerchant.merchantId,
       qrCodeParkingId: qrState.parkingId,
       //----------------------------------
-      svRrn: paymentType == 'CARD' ? res ? res.rrn : payType.rrn : null,//,'000000000001', //params.invoice cardar tolson bol  ENE 2IIN ALI REDPOINT ALI NI MONGO ESEHIIG ASUUJ TOHIRUULAH
-      xlsRrn: paymentType == 'CARD' ? res ? res.invoice : payType.invoice : null,//'0000000000002', //params.rrn //redpointoor tolson bol
+      svRrn: paymentType == 'CARD' ? res ? res.rrn : payType.rrn : null,
+      xlsRrn: paymentType == 'CARD' ? res ? res.invoice : payType.invoice : null,
       operDate: dateFormat(new Date(), 'yyyymmddHHMMss'),
       operTerminalType: state.userRole, //userRole-s hamaaruulj haruulnaa
       operUserId: state.userId,
@@ -502,6 +509,7 @@ const ShowPayment = (props) => {
     axios.defaults.headers.common = {
       Authorization: `Bearer ${state.token}`,
     };
+    console.log("SERVER PAID: ",data);
 
     await PayByCard.doData();
 
@@ -608,25 +616,25 @@ const ShowPayment = (props) => {
     // })
     // ---------------------------------------------------------------------------------
     // await PayByCard.doData();
-    NativeModules.PayByCard.pay(parseInt(localInfo.totalAmount) - parseInt(qrState.amount) + '')
+    NativeModules.PayByCard.pay(parseInt(localInfo.totalAmount) - parseInt(qrState.amount) + '00')
     // NativeModules.PayByCard.pay('100')
       .then((res) => {
 
         console.log('hariu2: ', res);
         // {"code": "-22", "description": "Гүйлгээ цуцлагдсан", "invoice": null, "rrn": ""}
 
-        // if (res.code == 0) {
-          if (true) {
+        if (res.code == 0) {
+          // if (true) {
 
           cacheSteps(3);
 
-          // postPaidServer('CARD',res);
+          postPaidServer('CARD',res);
 
           setPayType((prev) => ({
             ...prev,
             type: 'CARD',
-            rrn: '0000000000001', //res.rrn && res.rrn
-            invoice: '0000000000001', //res.invoice && res.invoice
+            rrn: res.rrn ? res.rrn : null,//'0000000000001', //res.rrn && res.rrn
+            invoice: res.invoice ? res.invoice : null,
             paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
           }));
 
@@ -717,6 +725,7 @@ const ShowPayment = (props) => {
             <View style={styles.method}>
               <View style={styles.buttons}>
                 {state.userRole === 'POSTPOS' && (  <PayButton red={true} onPress={() => payStep('CASH')}/>)}
+                {/* <PayButton red={false} onPress={() => payStep('CARD')} disabled style={{opacity: 0.5}}/> */}
                 <PayButton red={false} onPress={() => payStep('CARD')}/>
               </View>
             </View>
@@ -730,7 +739,6 @@ const ShowPayment = (props) => {
 
   return (
     <>
-      {spin && <Spinner visible={true} />}
       <View style={styles.container}>
         <Ebarimt
           showModal={modal.show}
@@ -782,6 +790,7 @@ const ShowPayment = (props) => {
         </View>
         <Actions/>
       </View>
+      {spin && <Spinner visible={true} />}
     </>
   );
 };
