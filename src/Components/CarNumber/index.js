@@ -36,8 +36,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 2,
-    marginVertical: 5,
-    marginHorizontal: (width*.9 - 130*2)/4
+    marginVertical: 10,
+    marginHorizontal: (width*.9 - 130*2)/4,
+    // marginVertical: 50
   },
   number: {
     fontSize: 20,

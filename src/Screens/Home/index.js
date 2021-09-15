@@ -1,4 +1,4 @@
-import React, {useContext, useState, useEffect} from 'react';
+import React, {useContext, useState, useEffect, useRef} from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,6 +11,7 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
   ActivityIndicator,
+  Keyboard
 } from 'react-native';
 import axios from 'axios';
 import {useIsFocused} from '@react-navigation/native';
@@ -29,6 +30,10 @@ const {width, height} = Dimensions.get('window');
 
 const Home = (props) => {
   const {PayByCard} = NativeModules;
+  const page = useRef(0);
+  const getNextPage = useRef(false);
+  const searched = useRef(false);
+  const [reaching, setReaching] = useState(false);
   const [spin, setSpin] = useState(false);
   const [modal, setModal] = useState({
     visible: false,
@@ -88,6 +93,8 @@ const Home = (props) => {
   const getCarNumber = async (number) => {
     if (number.length < 4) alert('Та хайх дугаараа оруулна уу.');
     else {
+      //Keyboard hide
+      Keyboard.dismiss();
       axios.defaults.headers.common = {
         Authorization: `Basic MTE0MDA1ODI2MzoxMTQwMDU4MjYz`,
       };
@@ -104,6 +111,7 @@ const Home = (props) => {
         .then((res) => {
           setSpin(false);
           if (res.data.message === 'Амжилттай') {
+            searched.current = true;
             setData([...res.data.entity]);
           } else {
             alert(res.data.message);
@@ -118,24 +126,37 @@ const Home = (props) => {
   };
 
 
-  const getCurrentCars = async () => {
+  const getCurrentCars = async (noLoading = false) => {
+    if(getNextPage.current) return;
+
+    getNextPage.current = true;
+
     axios.defaults.headers.common = {
       Authorization: `Basic MTE0MDA1ODI2MzoxMTQwMDU4MjYz`,
     };
     try {
       await PayByCard.doWifi();
-      setSpin(true);
-      // console.log(`${config.localIp}:6080/parking-local/paParkingTxn/currentCars`);
+      !noLoading && setSpin(true);
+      noLoading && setReaching(true);
+      console.log("calling page: ", page.current);
       const currentCars = await axios.get(
-        `${config.localIp}:6080/parking-local/paParkingTxn/currentCars`,
+        `${config.localIp}:6080/parking-local/paParkingTxn/currentCars?pageNumber=${page.current}`, //?pageNumber${page.current}
       );
-      // console.log('reallyMe', currentCars.data.entity[1]);
 
-      setData([...currentCars.data.entity]);
+      console.log('RES LENGTH:',currentCars.data.entity.length );
+      if(currentCars.data.status == '000' && currentCars.data.entity.length > 0){
+        page.current++;
+        noLoading 
+        ? setData(prev => ([...prev, ...currentCars.data.entity]))
+        : setData([...currentCars.data.entity]);
+      }
       setSpin(false);
+      noLoading && reaching && setReaching(false);
     } catch (error) {
       console.log('get Current number error', error);
-      setSpin(false);
+      spin && setSpin(false);
+    }finally{
+      getNextPage.current = false;
     }
   };
 
@@ -225,7 +246,6 @@ const Home = (props) => {
       }
     };
     checkCache();
-
     getCurrentCars();
     ebarimtTurnOn();
   }, []);
@@ -284,6 +304,13 @@ const Home = (props) => {
     setData(prev => (prev.filter(e => e.txnId != id)));
   }
 
+  const nextPage = () => {
+    // console.log("PAGE: ", page.current);
+    if(!searched.current)
+      getCurrentCars(true);
+    // refreshing
+  }
+
   return (
     <View style={styles.container}>
       {/* <TouchableOpacity onPress={test}>
@@ -298,10 +325,10 @@ const Home = (props) => {
       <Controller
         getCar={getCar}
         onSearch={getCarNumber}
-        clearData={() => getCurrentCars()}
+        clearData={() => {page.current = 0; searched.current = false; getCurrentCars()}}
         scanBarcode={scanBarcode}
       />
-      <CarNumbers navigation={props.navigation} data={data} deleteById={deleteById} onEndReached={() => console.log("reaching")}/>
+      <CarNumbers navigation={props.navigation} data={data} deleteById={deleteById} onEndReached={nextPage} reaching={reaching}/>
 
       <Modal animationType="fade" transparent={true} visible={modal.visible}>
         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
