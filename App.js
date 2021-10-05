@@ -1,12 +1,4 @@
-import React, {useState, useContext, useLayoutEffect} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableHighlight,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import React, {useState, useContext, useLayoutEffect, useEffect} from 'react';
 import 'react-native-gesture-handler';
 import {createStackNavigator} from '@react-navigation/stack';
 import 'react-native-gesture-handler';
@@ -28,6 +20,7 @@ import Splash from './src/Screens/Splash';
 import Settings from './src/Screens/Settings';
 import {  setSimcard, setIp } from './config';
 import AsyncStorage from '@react-native-community/async-storage';
+import SplashScreen from 'react-native-splash-screen';
 
 const Drawer = createDrawerNavigator();
 
@@ -98,7 +91,9 @@ const MyStack = () => {
 const authStack = createStackNavigator();
 
 const App = () => {
-  const {state, showSplash} = useContext(UserState);
+  const {state, showSplash, setState} = useContext(UserState);
+  const [splash, setSplash] = useState(true);
+
   useLayoutEffect(() => {
     const setSetting = async () => {
       const simType = await AsyncStorage.getItem('simType');
@@ -108,21 +103,30 @@ const App = () => {
       if(localId) setIp(localId);
     };
     setSetting();
-  },[])
+  },[]);
+
+  useEffect(() =>{
+    const restore = async () => {
+      const prevState = await AsyncStorage.getItem('state');
+      if (prevState != null) {
+        const tmp = JSON.parse(prevState);
+        setState({...tmp});
+      }
+      SplashScreen.hide();
+      // setSplash(false);
+    };
+    restore();
+  },[]);
+
   return (
-    // <PayByCash />
     <NavigationContainer>
-      {showSplash ? (
-        <Splash />
-      ) : state.token ? (
+      {
+      // splash ? (
+      //   <Splash />
+      // ) : 
+      state.token ? (
         <MyStack />
       ) : (
-        // <authStack.Screen
-        //   name="MyStack"
-        //   component={MyStack}
-        //   options={{headerShown: false}}
-        // />
-        // <Login />
         <authStack.Navigator>
           <authStack.Screen
             name="Login"

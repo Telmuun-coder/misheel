@@ -9,12 +9,10 @@ import {
   Alert,
   Modal,
   Dimensions,
-  TouchableWithoutFeedback,
   ActivityIndicator,
   Keyboard
 } from 'react-native';
 import axios from 'axios';
-import {useIsFocused} from '@react-navigation/native';
 import AsyncStorage from '@react-native-community/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -25,6 +23,7 @@ import Spinner from '../../Components/Spinner';
 import config from '../../../config';
 import ScannButton from '../../Components/ScannButton';
 import dateFormat from 'dateformat';
+import { unionBy } from 'lodash';
 
 const {width, height} = Dimensions.get('window');
 
@@ -40,12 +39,10 @@ const Home = (props) => {
     load: true,
     data: {},
   });
-  const [modalLoader, setModalLoader] = useState(true);
   const {setStater, state} = useContext(UserState);
   const [data, setData] = useState([]);
-  const isFocused = useIsFocused();
 
-  const scanBarcode = (props) => {
+  const scanBarcode = () => {
     NativeModules.BarcodeModule.init()
       .then(() => {
         NativeModules.BarcodeModule.scan()
@@ -102,12 +99,7 @@ const Home = (props) => {
 
       setSpin(true);
       console.log("searching: ", config.localIp +':6080/parking-local/paParkingTxn/findByPlateNumber?plateNumber=' + number);
-      axios
-        .get(
-          config.localIp +
-            ':6080/parking-local/paParkingTxn/findByPlateNumber?plateNumber=' +
-            number,
-        )
+      axios.get(config.localIp + ':6080/parking-local/paParkingTxn/findByPlateNumber?plateNumber=' + number)
         .then((res) => {
           setSpin(false);
           if (res.data.message === 'Амжилттай') {
@@ -144,17 +136,23 @@ const Home = (props) => {
       );
 
       console.log('RES LENGTH:',currentCars.data.entity.length );
-      if(currentCars.data.status == '000' && currentCars.data.entity.length > 0){
+      if(currentCars.data.status == '000' && currentCars.data.entity.length > 0) {
         page.current++;
         noLoading 
-        ? setData(prev => ([...prev, ...currentCars.data.entity]))
+        ? setData(prev => {
+          // let result = unionBy(prev, currentCars.data.entity, 'txnId');
+          // return result;
+
+          return([...prev, ...currentCars.data.entity])
+        })
         : setData([...currentCars.data.entity]);
       }
       setSpin(false);
-      noLoading && reaching && setReaching(false);
+      setReaching(false);
     } catch (error) {
       console.log('get Current number error', error);
-      spin && setSpin(false);
+      
+      setSpin(false);
     }finally{
       getNextPage.current = false;
     }
@@ -172,9 +170,7 @@ const Home = (props) => {
     try {
       await PayByCard.doWifi();
       // setSpin(true);
-      const car = await axios.get(
-        `${config.localIp}:6080/parking-local/paParkingTxn/latestReadPlate`,
-      );
+      const car = await axios.get(`${config.localIp}:6080/parking-local/paParkingTxn/latestReadPlate`);
       if (car.data.status == '000') {
         console.log('Current Car: ', car.data);
         setModal({
@@ -305,29 +301,22 @@ const Home = (props) => {
   }
 
   const nextPage = () => {
-    // console.log("PAGE: ", page.current);
     if(!searched.current)
       getCurrentCars(true);
-    // refreshing
   }
 
   return (
     <View style={styles.container}>
-      {/* <TouchableOpacity onPress={test}>
-        <Text>click and test</Text>
-      </TouchableOpacity> */}
-      {/* <View style={styles.scan}> */}
-      {/* <Text>Хөнгөлөлтийн хуудас уншуулах:</Text> */}
-      {/* <ScannButton onPress={scanBarcode} /> */}
-      {/* </View> */}
+      
       <StatusBar barStyle="dark-content" backgroundColor="transparent" />
 
       <Controller
         getCar={getCar}
         onSearch={getCarNumber}
-        clearData={() => {page.current = 0; searched.current = false; getCurrentCars()}}
+        clearData={() => {page.current = 0; searched.current = false; getCurrentCars(false)}}
         scanBarcode={scanBarcode}
       />
+      
       <CarNumbers navigation={props.navigation} data={data} deleteById={deleteById} onEndReached={nextPage} reaching={reaching}/>
 
       <Modal animationType="fade" transparent={true} visible={modal.visible}>

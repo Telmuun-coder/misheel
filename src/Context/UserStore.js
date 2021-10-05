@@ -93,39 +93,25 @@ const UserStore = (props) => {
     await AsyncStorage.setItem('state', JSON.stringify(tmp));
   };
 
-  useLayoutEffect(() => {
-    const setSetting = async () => {
-      const simType = await AsyncStorage.getItem('simType');
-      const localId = await AsyncStorage.getItem('localId');
-      console.log(simType);
-      if(simType) setSimcard(simType); 
-      if(localId) setIp(localId);
-    };
-    setSetting();
-  },[])
-
-  useEffect(() => {
-    const restore = async () => {
-      setTimeout(() => setShowSplash(false), 1000);
-      // console.log('wtf restore');
-      const prevState = await AsyncStorage.getItem('state');
-      if (prevState != null) {
-        const tmp = JSON.parse(prevState);
-        setState({...tmp});
-        // setRem('had');
-        // console.log('backUp', tmp);
-      }
-    };
-    restore();
-  }, []);
+  // useEffect(() => {
+  //   const restore = async () => {
+  //     setTimeout(() => setShowSplash(false), 1000);
+  //     const prevState = await AsyncStorage.getItem('state');
+  //     if (prevState != null) {
+  //       const tmp = JSON.parse(prevState);
+  //       setState({...tmp});
+  //     }
+  //   };
+  //   restore();
+  // }, []);
+  
   return (
     <UserState.Provider
       value={{
         state,
         setStater,
+        setState,
         auth,
-        // setRem,
-        // rem,
         setShowSplash,
         showSplash,
         setMount,

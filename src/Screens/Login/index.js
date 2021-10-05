@@ -30,7 +30,7 @@ const Login = ({navigation}) => {
       <View style={{alignItems: 'center'}}>
         <Image
           style={styles.logo}
-          source={require('../../Images/parkingLogo.png')}
+          source={require('../../Images/ParkingLogin.png')}
         />
         <Text style={styles.title}>Авто зогсоолын систем</Text>
       </View>
@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 271,
+    height: 83,
   },
   title: {
     fontWeight: 'bold',

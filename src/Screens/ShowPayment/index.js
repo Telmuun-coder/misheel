@@ -373,12 +373,12 @@ const ShowPayment = (props) => {
             qrData: obj.qrData,
             tax: obj.vat,
           },
-          tbarimt: {
-            plateNumber: localInfo.plateNumber,
-            amount: obj.amount,
-            date: obj.date,
-            qrData: serverInfo.paymentQr,
-          },
+          // tbarimt: {
+          //   plateNumber: localInfo.plateNumber,
+          //   amount: obj.amount,
+          //   date: obj.date,
+          //   qrData: serverInfo.paymentQr,
+          // },
         };
         console.log('PRINTING: ', JSON.stringify(data));
         AsyncStorage.removeItem('eBarimtPostData');  
@@ -452,10 +452,7 @@ const ShowPayment = (props) => {
             isPaid: true,
             // paidAmount: serverInfo.paidAmount,
           }));
-          AsyncStorage.setItem(
-            'payType',
-            JSON.stringify({...payType, isPaid: true}),
-          );
+          AsyncStorage.setItem('payType', JSON.stringify({...payType, isPaid: true}));
           // clearCache();
           setSpin(false);
         } else {
@@ -531,25 +528,11 @@ const ShowPayment = (props) => {
             true,
           );
 
-          // await AsyncStorage.setItem(
-          //   'serverInfo',
-          //   JSON.stringify({
-          //     ...res.data.entity,
-          //     serverTxnId: res.data.entity.txnId,
-          //   }),
-          // );
-
           //serverees irsen res-g stated hadgalah
           setServerInfo({
             ...res.data.entity,
             serverTxnId: res.data.entity.txnId,
           });
-          //server-es irsen res-g locald medegdeh funtion-g duudah
-          // postPaidLocal({
-          //   ...res.data.entity,
-          //   serverTxnId: res.data.entity.txnId,
-          //   paymentType: paymentType,
-          // });
         } else {
           alert('Server paid: ' + res.data.message);
           setSpin(false);
@@ -591,31 +574,6 @@ const ShowPayment = (props) => {
 
   const payByCard = async () => {
 
-    // NativeModules.PayByCard.pay(localInfo.totalAmount + '').then(res => {
-    //   // svRrn: '000000000001', //params.invoice
-    //   // xlsRrn: '0000000000002', //params.rrn
-    //   cacheSteps(3);
-    //   postPaidServer('CARD');
-    //   setPayType((prev) => ({
-    //     ...prev,
-    //     type: 'CARD',
-    //     rrn: '0000000000001',
-    //     // isPaid: true,
-    //     paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
-    //   }));
-    //   cacheData('localInfo');
-    //   AsyncStorage.setItem(
-    //     'payType',
-    //     JSON.stringify({
-    //       ...payType,
-    //       type: 'CARD',
-    //       rrn: '0000000000001',
-    //       paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
-    //     }),
-    //   );
-    // })
-    // ---------------------------------------------------------------------------------
-    // await PayByCard.doData();
     NativeModules.PayByCard.pay(parseInt(localInfo.totalAmount) - parseInt(qrState.amount) + '00')
     // NativeModules.PayByCard.pay('100')
       .then((res) => {
@@ -649,9 +607,11 @@ const ShowPayment = (props) => {
               paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
             }),
           );
+        }else{
+          aler('Картаар төлөх үед алдаа гарлаа. Та дахин оролдоно уу.');
         }
       })
-      .catch((e) => console.log('cardaar toloh uyd aldaa garlaa', e));
+      .catch((e) => {console.log('cardaar toloh uyd aldaa garlaa', e)});
 
   };
   const payDef = (type) => {
@@ -703,8 +663,8 @@ const ShowPayment = (props) => {
 
   const Actions = () => {
     // if(tolow == 'normal')
-    return(
-      <>
+    return (
+      <> 
         {payType.isPaid ? (
           <View style={styles.scan}>
             <Text style={{color: 'green', fontSize: 20, marginBottom: 10}}>
@@ -733,8 +693,6 @@ const ShowPayment = (props) => {
         )}
       </>
     )
-    // else 
-    // return <PayButton red={false} title="Үргэлжлүүлэх" onPress={continueStep} />;
   }
 
   return (
