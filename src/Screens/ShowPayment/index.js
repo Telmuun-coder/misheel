@@ -313,40 +313,6 @@ const ShowPayment = (props) => {
         bankTransactions: '',
       },
     ];
-    const exampleData = [
-      {
-        organization_id: 29,
-        amount: '25200.00',
-        vat: '0.00',
-        cashAmount: '25200.00',
-        nonCashAmount: '0.00',
-        cityTax: '0.00',
-        districtCode: '24',
-        posNo: '',
-        customerNo: '',
-        billType: '1',
-        billIdSuffix: '',
-        returnBillId: '',
-        taxType: '1',
-        invoiceId: '',
-        reportMount: '2019-06',
-        branchNo: '023',
-        stocks: [
-          {
-            code: '410',
-            name: 'test',
-            measureUnit: 't',
-            qty: '1.00',
-            unitPrice: '25200.00',
-            totalAmount: '25200.00',
-            vat: '0.00',
-            barCode: '410',
-            cityTax: '0.00',
-          },
-        ],
-        bankTransactions: '',
-      },
-    ];
     AsyncStorage.setItem('eBarimtPostData', JSON.stringify(data));
 
     console.log('SENDING: ', JSON.stringify(data));
@@ -373,16 +339,19 @@ const ShowPayment = (props) => {
             qrData: obj.qrData,
             tax: obj.vat,
           },
-          // tbarimt: {
-          //   plateNumber: localInfo.plateNumber,
-          //   amount: obj.amount,
-          //   date: obj.date,
-          //   qrData: serverInfo.paymentQr,
-          // },
         };
-        console.log('PRINTING: ', JSON.stringify(data));
-        AsyncStorage.removeItem('eBarimtPostData');  
+        // console.log('PRINTING: ', JSON.stringify(data));
+        
+        let eBarimtList = await AsyncStorage.getItem('eBarimtList');
+        if(eBarimtList) eBarimtList = JSON.parse(eBarimtList);
+        eBarimtList.pop();
+
+        await AsyncStorage.multiRemove(['eBarimtPostData', 'eBarimtList']);
+        AsyncStorage.setItem('eBarimtList', JSON.stringify('eBarimtList'));
         await PrintDiscount.printBarimt(JSON.stringify(printData));
+        const listAfterPrint = await AsyncStorage.getItem('eBarimtList');
+        console.log('listAfterPrint:', listAfterPrint);
+
         clearCache();
         route.params.deleteById();
         props.navigation.pop();
@@ -443,17 +412,77 @@ const ShowPayment = (props) => {
     await PayByCard.doWifi();
     axios
       .post(config.localIp + ':6080/parking-local/paParkingTxn/paid', data)
-      .then((res) => {
+      .then(async (res) => {
         if (res.data.message == 'Амжилттай') {
           console.log('localServer: ', res.data.message);
           cacheSteps(5);
-          setPayType((prev) => ({
-            ...prev,
-            isPaid: true,
-            // paidAmount: serverInfo.paidAmount,
-          }));
-          AsyncStorage.setItem('payType', JSON.stringify({...payType, isPaid: true}));
-          // clearCache();
+          let payTypeTmp = {...payType, isPaid: true};
+          setPayType(payTypeTmp);
+
+          let amount = parseInt(localInfo.totalAmount) - parseInt(qrState.amount);
+          amount = (Math.round(amount * 100) / 100).toFixed(2);
+          const vat = (Math.round((amount / 11) * 100) / 100).toFixed(2);
+           
+          const barimtData = [
+            {
+              organization_id: state.organization_id,
+              amount: amount,
+              vat: vat,
+              cashAmount: payType.type == 'CASH' ? amount : '0.00',
+              nonCashAmount: payType.type == 'CARD' ? amount : '0.00',
+              cityTax: '0.00', 
+              districtCode: state.parkingList[0].districtCode,
+              posNo: '', 
+              customerNo: '',
+              billType: `info.type == 'org' ? '3' : '1'`,
+              billIdSuffix: '',
+              returnBillId: '',
+              taxType: '1',
+              invoiceId: '',
+              reportMount: dateFormat(new Date(), 'yyyy-mm'),
+              branchNo: '001', 
+              stocks: [
+                {
+                  barCode: '1',
+                  cityTax: '0.00',
+                  code: '001',
+                  measureUnit: 'Минут',
+                  name: 'Зогсоолын төлбөр',
+                  qty: (Math.round(localInfo.totalMinutes * 100) / 100).toFixed(2),
+                  totalAmount: amount,
+                  unitPrice: (Math.round((amount / localInfo.totalMinutes) * 100) / 100).toFixed(2),
+                  vat: (Math.round((amount / 11) * 100) / 100).toFixed(2),
+                },
+              ],
+              bankTransactions: '',
+            },
+          ];
+
+          const element =
+            {
+              localInfo: {
+                downtime: localState.downtime,
+                plateNumber: localInfo.plateNumber,
+                enterDate: localInfo.enterDate,
+                paidAmount: payType.paidAmount
+              },
+              barimtData
+            };
+
+          let eBarimtList = await AsyncStorage.getItem('eBarimtList');
+          if(eBarimtList) eBarimtList = JSON.parse(eBarimtList);
+          else eBarimtList = [];
+
+          eBarimtList.push(element);
+          if(eBarimtList.length > 10) eBarimtList.shift();
+
+          // const noet = ['eBarimtList', JSON.stringify(eBarimtList)];
+          const noet = ['eBarimtList', JSON.stringify([])];
+          const payingType = ['payType', JSON.stringify(payTypeTmp)];
+
+          console.log("CATCHING DATA: ", JSON.stringify(eBarimtList));
+
+          AsyncStorage.multiSet([noet, payingType]);
           setSpin(false);
         } else {
           setSpin(false);
@@ -518,21 +547,16 @@ const ShowPayment = (props) => {
         // console.log('resposen:', res.data);
         if (res.data.message === 'Амжилттай') {
           console.log('paidServer: ', res.data.message);
+          res.data.entity.serverTxnId = res.data.entity.txnId;
           cacheSteps(4);
           cacheData(
             'serverInfo',
-            {
-              ...res.data.entity,
-              serverTxnId: res.data.entity.txnId,
-            },
+            res.data.entity,
             true,
           );
 
           //serverees irsen res-g stated hadgalah
-          setServerInfo({
-            ...res.data.entity,
-            serverTxnId: res.data.entity.txnId,
-          });
+          setServerInfo(res.data.entity);
         } else {
           alert('Server paid: ' + res.data.message);
           setSpin(false);
@@ -553,62 +577,41 @@ const ShowPayment = (props) => {
     cacheSteps(3);
 
     postPaidServer('CASH');
-    setPayType((prev) => ({
-      ...prev,
+    let payTypeTmp = {
+      ...payType,
       type: 'CASH',
       rrn: null,
       invoice: null,
       paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
-    }));
+    };
+    setPayType(payTypeTmp);
     cacheData('localInfo');
-    AsyncStorage.setItem(
-      'payType',
-      JSON.stringify({
-        ...payType,
-        type: 'CASH',
-        rrn: '',
-        paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
-      }),
-    );
+    AsyncStorage.setItem('payType',JSON.stringify(payTypeTmp));
   };
 
   const payByCard = async () => {
 
-    NativeModules.PayByCard.pay(parseInt(localInfo.totalAmount) - parseInt(qrState.amount) + '00')
+    NativeModules.PayByCard.pay(`${parseInt(localInfo.totalAmount) - parseInt(qrState.amount)}00`)
     // NativeModules.PayByCard.pay('100')
       .then((res) => {
-
         console.log('hariu2: ', res);
         // {"code": "-22", "description": "Гүйлгээ цуцлагдсан", "invoice": null, "rrn": ""}
 
         if (res.code == 0) {
-          // if (true) {
-
           cacheSteps(3);
-
           postPaidServer('CARD',res);
-
-          setPayType((prev) => ({
-            ...prev,
+          let payTypeTmp = {
+            ... payType, 
             type: 'CARD',
-            rrn: res.rrn ? res.rrn : null,//'0000000000001', //res.rrn && res.rrn
+            rrn: res.rrn ? res.rrn : null,
             invoice: res.invoice ? res.invoice : null,
             paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
-          }));
-
+          };
+          setPayType(payTypeTmp);
           cacheData('localInfo');
-
-          AsyncStorage.setItem(
-            'payType',
-            JSON.stringify({
-              ...payType,
-              type: 'CARD',
-              rrn: '0000000000001',
-              paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
-            }),
-          );
+          AsyncStorage.setItem('payType', JSON.stringify(payTypeTmp));
         }else{
-          aler('Картаар төлөх үед алдаа гарлаа. Та дахин оролдоно уу.');
+          alert('Картаар төлөх үед алдаа гарлаа. Та дахин оролдоно уу.');
         }
       })
       .catch((e) => {console.log('cardaar toloh uyd aldaa garlaa', e)});
@@ -638,12 +641,12 @@ const ShowPayment = (props) => {
   };
 
   const backAction = () => {
-    // console.log("TOLSONUUU:", payType.isPaid);
+    console.log("TOLSONUUU:", payType.isPaid);
     if(payType.isPaid) {
       AlertBeforeGoBack();
+      console.log("in if");
       return true;
     }
-    return false;
   };
 
   useEffect(() => {
@@ -653,7 +656,7 @@ const ShowPayment = (props) => {
       backHandler.remove();
       clearCache();
     };
-  }, []);
+  }, [payType.isPaid]);
 
   // const continueStep = () => {
   //   setTolow('normal');

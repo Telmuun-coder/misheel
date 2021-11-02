@@ -6,11 +6,17 @@ const WINDOWS_WIDTH = Dimensions.get('window').width;
 const WINDOWS_HEIGHT = Dimensions.get('window').height;
 
 const CarNumbers = (props) => {
+
+  const Footer = () => (
+    <View style={[styles.indicator, {backgroundColor: 'red'}]}>
+      <ActivityIndicator animating={props.reaching} size={'small'} color={'#000'}/>
+    </View>
+  )
   return (
-    <>
     <FlatList
       onEndReachedThreshold={0.1}
       onEndReached={props.onEndReached}
+      ListFooterComponent={() => <Footer/>}
       data={props.data}
       style={styles.carNumbers}
       contentContainerStyle={{justifyContent: 'space-between'}}
@@ -18,10 +24,6 @@ const CarNumbers = (props) => {
       keyExtractor={e => `${e.txnId}${Math.random()}`}
       renderItem={({item}) => <CarNumber navigation={props.navigation} data={item} deleteById={props.deleteById}/>}
     />
-    <View style={styles.indicator}>
-      <ActivityIndicator animating={props.reaching} size={'small'} color={'#000'}/>
-    </View>
-    </>
   );
 };
 

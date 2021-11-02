@@ -31,6 +31,11 @@ const DrawerContent = (props) => {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.item}
+            onPress={() => props.navigation.navigate('EbarimtList')}>
+            <Text style={styles.label}>НӨАТ БАРИМТ</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.item}
             onPress={() => props.navigation.navigate('Settings')}>
             <Text style={styles.label}>ТОХИРГОО</Text>
           </TouchableOpacity>

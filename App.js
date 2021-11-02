@@ -21,6 +21,8 @@ import Settings from './src/Screens/Settings';
 import {  setSimcard, setIp } from './config';
 import AsyncStorage from '@react-native-community/async-storage';
 import SplashScreen from 'react-native-splash-screen';
+import EbarimtList from './src/Screens/EbarimtList';
+import Printer from './src/Screens/EbarimtList/Printer';
 
 const Drawer = createDrawerNavigator();
 
@@ -40,6 +42,8 @@ const Hanburner = () => {
         }}
         component={Home}
       />
+      <Drawer.Screen name="EbarimtList" component={EbarimtList} />
+      <Drawer.Screen name="Printer" component={Printer} />
       <Drawer.Screen name="Settings" component={Settings} />
       {/* <Drawer.Screen name="PayByCash" component={PayByCash} /> */}
       {/* <Drawer.Screen name="ChangePass" component={ChangePass} /> */}

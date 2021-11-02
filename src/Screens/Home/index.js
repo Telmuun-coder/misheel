@@ -10,7 +10,8 @@ import {
   Modal,
   Dimensions,
   ActivityIndicator,
-  Keyboard
+  Keyboard,
+  TouchableWithoutFeedback
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -213,7 +214,7 @@ const Home = (props) => {
 
     const checkCache = async () => {
       let keys = await AsyncStorage.getAllKeys();
-      keys = keys.filter(e => (e != 'simType' && e != 'localId' && e != 'isCalled'))
+      keys = keys.filter(e => (e != 'simType' && e != 'localId' && e != 'isCalled' && e != 'eBarimtList'));
       const AlertBeforeGoBack = () =>
         Alert.alert(
           'Анхаар!',
@@ -321,45 +322,52 @@ const Home = (props) => {
 
       <Modal animationType="fade" transparent={true} visible={modal.visible}>
         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <View
+          <TouchableWithoutFeedback onPress={() => setModal((prev) => ({...prev, visible: false}))}>
+            <View style={styles.shadow}>
+
+          {/* <View
             style={styles.shadow}
             onStartShouldSetResponder={() =>
               setModal((prev) => ({...prev, visible: false}))
             }
-          />
-          <View style={styles.ModalContainer}>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              style={styles.close}
-              onPress={() => setModal((prev) => ({...prev, visible: false}))}>
-              <Icon name="ios-close" size={30} color="#7E7E7E" />
-            </TouchableOpacity>
-            <Text>Гарах машины дугаар:</Text>
-            {modal.load ? (
-              <ActivityIndicator
-                size="large"
-                color="black"
-                style={{marginTop: -80}}
-              />
-            ) : (
-              <>
-                <Text style={styles.plateNumber}>
-                  {modal.data != null ? modal.data.plateNumber : '0000AAA'}
-                </Text>
-                <View style={styles.buttons}>
-                  <TouchableOpacity
-                    disabled={modal.data == null}
-                    onPress={payByModal}
-                    style={[styles.miniBtn, {elevation: 3}, modal.data == null && {opacity: 0.5}]}>
-                    <Text style={styles.miniBtnTitle}>Төлөх</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.miniBtn} onPress={getCar}>
-                    <Text style={{fontSize: 16}}>Дахин шалгах</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
-          </View>
+          /> */}
+
+              <View style={styles.ModalContainer}>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  style={styles.close}
+                  onPress={() => setModal((prev) => ({...prev, visible: false}))}>
+                  <Icon name="ios-close" size={30} color="#7E7E7E" />
+                </TouchableOpacity>
+                <Text>Гарах машины дугаар:</Text>
+                {modal.load ? (
+                  <ActivityIndicator
+                    size="large"
+                    color="black"
+                    style={{marginTop: -80}}
+                  />
+                ) : (
+                  <>
+                    <Text style={styles.plateNumber}>
+                      {modal.data != null ? modal.data.plateNumber : '0000AAA'}
+                    </Text>
+                    <View style={styles.buttons}>
+                      <TouchableOpacity
+                        disabled={modal.data == null}
+                        onPress={payByModal}
+                        style={[styles.miniBtn, {elevation: 3}, modal.data == null && {opacity: 0.5}]}>
+                        <Text style={styles.miniBtnTitle}>Төлөх</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.miniBtn} onPress={getCar}>
+                        <Text style={{fontSize: 16}}>Дахин шалгах</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+              </View>
+
+            </View>
+          </TouchableWithoutFeedback>
         </View>
       </Modal>
 
@@ -406,6 +414,8 @@ const styles = StyleSheet.create({
     left: 0,
     width,
     height,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   plateNumber: {
     fontSize: 20,
