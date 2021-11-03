@@ -28,14 +28,14 @@ const Ebarimt = (props) => {
     const reg = /^\d+$/;
     if (state.type == 'org') {
       if (reg.test(state.register) && (state.register.length == 7 || state.register.length == 10)) {
-        props.setShowModal({show: false, ...state});
+        props.setShowModal();
         props.printEbarimt(state);
       }
       else {
         setState((prev) => ({...prev, valid: true}));
       }
     } else {
-      props.setShowModal({show: false, ...state});
+      props.setShowModal();
       props.printEbarimt(state);
     }
   };
@@ -44,10 +44,10 @@ const Ebarimt = (props) => {
       animationType="slide"
       transparent={true}
       visible={props.showModal}
-      onRequestClose={() => props.setShowModal({show: false})}>
+      onRequestClose={() => props.setShowModal()}>
       <View
         style={styles.shadow}
-        onStartShouldSetResponder={() => props.setShowModal({show: false})}
+        onStartShouldSetResponder={() => props.setShowModal()}
       />
       <View style={styles.container}>
         <Text style={styles.title}>Баримт Хэвлэх</Text>

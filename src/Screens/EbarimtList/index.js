@@ -1,14 +1,15 @@
 import React, {useState, useEffect} from 'react';
-import { StyleSheet, Text, View, FlatList, Dimensions, TouchableHighlight } from 'react-native';
+import { StyleSheet, Text, View, FlatList, Dimensions, TouchableHighlight, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/Entypo';
+import AsyncStorage from '@react-native-community/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
-const Item = ({item, navigation}) => {
+const Item = ({data, navigation}) => {
     return(
-        <TouchableHighlight onPress={() => navigation.navigate('Printer')} activeOpacity={0.7} underlayColor={'#707070'}>
+        <TouchableHighlight onPress={() => navigation.navigate('Printer',{data})} activeOpacity={0.7} underlayColor={'#707070'}>
             <View style={styles.item}>
-                <Text style={styles.itemNumber}>8989УБА</Text>
+                <Text style={styles.itemNumber}>{data.localInfo.plateNumber}</Text>
                 <Icon name="chevron-thin-right" color="#707070" size={30}/>
             </View>
         </TouchableHighlight>
@@ -16,14 +17,34 @@ const Item = ({item, navigation}) => {
 }
 
 const EbarimtList = ({navigation}) => {
-    const [list, setList] = useState([1,2,3,4,5,6,7,8,9,10]);
+    const [list, setList] = useState([]);
+
+    useEffect(()=>{
+        const readData = async () => {
+            let eBarimt = await AsyncStorage.getItem("eBarimtList");
+            // let eBarimt = await AsyncStorage.removeItem("eBarimtList");
+            if(eBarimt) eBarimt = JSON.parse(eBarimt);
+            else eBarimt = [];
+
+            console.log("Cached list", eBarimt.length);
+
+            setList(eBarimt);
+        };
+        readData();
+        const willFocusSubscription = navigation.addListener('focus', () => readData());
+
+        return willFocusSubscription;
+    },[]);
+
+
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Хадгалсан баримтууд</Text>
             <FlatList
                 data={list}
                 style={styles.items}
-                keyExtractor={e => e+''}
+                keyExtractor={e => e.localInfo.enterDate+`${Math.random()}`} //e.localInfo.txnId bolgono
+                ListEmptyComponent={() => <ActivityIndicator color={'#000'} size='large' animating/>}
                 renderItem={({item}) => <Item data={item} navigation={navigation}/>}
             />
         </View>
@@ -42,6 +63,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold', 
         alignSelf: 'center',
         marginBottom: 30,
+        marginTop: 10
     },
     items: {
         alignSelf: 'center',

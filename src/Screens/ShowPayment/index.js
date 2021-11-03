@@ -45,9 +45,7 @@ const ShowPayment = (props) => {
   const {PrintDiscount, PayByCard} = NativeModules;
   // const [tolow, setTolow] = useState(null);
   const {state} = useContext(UserState);
-  const [modal, setModal] = useState({
-    show: false,
-  });
+  const [modal, setModal] = useState(false);
   const [payType, setPayType] = useState({
     type: 'CASH',
     rrn: '0000000000001',
@@ -347,10 +345,9 @@ const ShowPayment = (props) => {
         eBarimtList.pop();
 
         await AsyncStorage.multiRemove(['eBarimtPostData', 'eBarimtList']);
-        AsyncStorage.setItem('eBarimtList', JSON.stringify('eBarimtList'));
+        AsyncStorage.setItem('eBarimtList', JSON.stringify(eBarimtList)); //clear await
         await PrintDiscount.printBarimt(JSON.stringify(printData));
-        const listAfterPrint = await AsyncStorage.getItem('eBarimtList');
-        console.log('listAfterPrint:', listAfterPrint);
+
 
         clearCache();
         route.params.deleteById();
@@ -464,7 +461,8 @@ const ShowPayment = (props) => {
                 downtime: localState.downtime,
                 plateNumber: localInfo.plateNumber,
                 enterDate: localInfo.enterDate,
-                paidAmount: payType.paidAmount
+                paidAmount: payType.paidAmount,
+                txnId: localInfo.localTxnId
               },
               barimtData
             };
@@ -476,8 +474,7 @@ const ShowPayment = (props) => {
           eBarimtList.push(element);
           if(eBarimtList.length > 10) eBarimtList.shift();
 
-          // const noet = ['eBarimtList', JSON.stringify(eBarimtList)];
-          const noet = ['eBarimtList', JSON.stringify([])];
+          const noet = ['eBarimtList', JSON.stringify(eBarimtList)];
           const payingType = ['payType', JSON.stringify(payTypeTmp)];
 
           console.log("CATCHING DATA: ", JSON.stringify(eBarimtList));
@@ -570,6 +567,12 @@ const ShowPayment = (props) => {
 
   useEffect(() => {
     localState.steps[localState.steps.length - 1] == 4 && postPaidLocal();
+    // const deleteEbarint = async () => {
+    //   await AsyncStorage.removeItem('eBarimtList');
+    //   console.log("deleted cache ebarimt list history");
+    // };
+    // deleteEbarint();
+
   }, [serverInfo]);
 
   const payByCash = () => {
@@ -674,7 +677,7 @@ const ShowPayment = (props) => {
               Амжилттай төлөгдлөө.
             </Text>
             {  state.organization_id
-                ? <PayButton red={false} title="Баримт хэвлэх" onPress={() => setModal((prev) => ({...prev, show: true}))} />
+                ? <PayButton red={false} title="Баримт хэвлэх" onPress={() => setModal(true)} />
                 : <PayButton red={false} title="БОЛСОН" onPress={doneWithoutEbarimt} /> } 
           </View>
         ) : (
@@ -702,9 +705,9 @@ const ShowPayment = (props) => {
     <>
       <View style={styles.container}>
         <Ebarimt
-          showModal={modal.show}
+          showModal={modal}
           printEbarimt={(info) => printEbarimt(info)}
-          setShowModal={(modal) => setModal((prev) => ({...prev, ...modal}))}
+          setShowModal={() => setModal(false)}
         />
         <Header
           title="Төлбөр төлөх"
