@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import { StyleSheet, Text, View, NativeModules } from 'react-native';
+import { StyleSheet, Text, View, NativeModules, SafeAreaView } from 'react-native';
 import Button from '../../Components/Button';
 import PayButton from '../../Components/PayButton';
 import { useRoute } from '@react-navigation/native';
@@ -8,6 +8,7 @@ import axios from 'axios';
 import config from '../../../config';
 import { fixJson } from '../../../help';
 import AsyncStorage from '@react-native-community/async-storage';
+import Spinner from '../../Components/Spinner';
 
 function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -84,7 +85,8 @@ const Printer = ({navigation}) => {
       };
 
     return (
-        <View style={styles.container}>
+        <View style={{flex: 1}}>
+        <SafeAreaView style={styles.container}>
             <View style={styles.content}>
                 <View style={styles.row}>
                 <Text style={styles.info}>Зогссон хугацаа:</Text>
@@ -114,11 +116,13 @@ const Printer = ({navigation}) => {
                 <PayButton red={false} title="Баримт хэвлэх" onPress={() => setModal(true)} />
             </View>
 
+        </SafeAreaView>
             <EbarimtModal
                 showModal={modal}
                 printEbarimt={(info) => printEbarimt(info)}
                 setShowModal={() => setModal(false)}
             />
+            {spin && <Spinner visible={true} />}
         </View>
     )
 }

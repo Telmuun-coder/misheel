@@ -18,6 +18,7 @@ const Item = ({data, navigation}) => {
 
 const EbarimtList = ({navigation}) => {
     const [list, setList] = useState([]);
+    const [loader, setLoader] = useState(true);
 
     useEffect(()=>{
         const readData = async () => {
@@ -26,9 +27,11 @@ const EbarimtList = ({navigation}) => {
             if(eBarimt) eBarimt = JSON.parse(eBarimt);
             else eBarimt = [];
 
-            console.log("Cached list", eBarimt.length);
+            console.log("reading");
+            
 
             setList(eBarimt);
+            setLoader(false);
         };
         readData();
         const willFocusSubscription = navigation.addListener('focus', () => readData());
@@ -40,13 +43,15 @@ const EbarimtList = ({navigation}) => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Хадгалсан баримтууд</Text>
-            <FlatList
-                data={list}
-                style={styles.items}
-                keyExtractor={e => e.localInfo.enterDate+`${Math.random()}`} //e.localInfo.txnId bolgono
-                ListEmptyComponent={() => <ActivityIndicator color={'#000'} size='large' animating/>}
-                renderItem={({item}) => <Item data={item} navigation={navigation}/>}
-            />
+            {loader 
+            ?   <ActivityIndicator color={'#000'} size='large' animating/>
+            :   <FlatList
+                    data={list}
+                    style={styles.items}
+                    keyExtractor={e => e.localInfo.txnId}
+                    ListEmptyComponent={() => <Text style={styles.emptyText}>Автоматаар хадгалсан баримт одоогоор байхгүй байна.</Text>}
+                    renderItem={({item}) => <Item data={item} navigation={navigation}/>}
+                />}
         </View>
     )
 }
@@ -86,5 +91,12 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: '#2e2e2e'
+    },
+    emptyText: {
+        width: '80%',
+        alignSelf: 'center',
+        textAlign: 'center',
+        fontSize: 16,
+        color: '#707070'
     }
 })

@@ -23,7 +23,7 @@ const DrawerContent = (props) => {
           </TouchableOpacity>
         </View>
 
-        <View style={{height: 200}}>
+        <View style={{height: 350}}>
           <TouchableOpacity
             style={styles.item}
             onPress={() => props.navigation.navigate('Home')}>
@@ -84,6 +84,7 @@ const styles = StyleSheet.create({
   label: {color: '#FFFFFF', fontSize: 16, marginLeft: '20%'},
   item: {
     width: '100%',
+    // marginTop: 50,
     flex: 1,
     // backgroundColor: 'red',
     justifyContent: 'center',
