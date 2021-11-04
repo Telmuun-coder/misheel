@@ -132,24 +132,25 @@ const Home = (props) => {
       !noLoading && setSpin(true);
       noLoading && setReaching(true);
       console.log("calling page: ", page.current);
-      const currentCars = await axios.get(
+      axios.get(
         `${config.localIp}:6080/parking-local/paParkingTxn/currentCars?pageNumber=${page.current}`, //?pageNumber${page.current}
-      );
-
-      console.log('RES LENGTH:',currentCars.data.entity.length );
-      if(currentCars.data.status == '000' && currentCars.data.entity.length > 0) {
-        page.current++;
-        noLoading 
-        ? setData(prev => {
-          // let result = unionBy(prev, currentCars.data.entity, 'txnId');
-          // return result;
-
-          return([...prev, ...currentCars.data.entity])
-        })
-        : setData([...currentCars.data.entity]);
-      }
-      setSpin(false);
-      setReaching(false);
+      ).then(currentCars => {
+        
+        console.log('RES LENGTH:',currentCars.data.entity.length );
+        if(currentCars.data.status == '000' && currentCars.data.entity.length > 0) {
+          page.current++;
+          noLoading 
+          ? setData(prev => {
+            // let result = unionBy(prev, currentCars.data.entity, 'txnId');
+            // return result;
+            
+            return([...prev, ...currentCars.data.entity])
+          })
+          : setData([...currentCars.data.entity]);
+        }
+        setSpin(false);
+        setReaching(false);
+      });
     } catch (error) {
       console.log('get Current number error', error);
       
@@ -302,6 +303,7 @@ const Home = (props) => {
   }
 
   const nextPage = () => {
+    // console.log("NEXT2");
     if(!searched.current){
       // console.log('calling next page')
       getCurrentCars(true);
