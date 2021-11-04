@@ -302,8 +302,10 @@ const Home = (props) => {
   }
 
   const nextPage = () => {
-    if(!searched.current)
+    if(!searched.current){
+      // console.log('calling next page')
       getCurrentCars(true);
+    }
   }
 
   return (

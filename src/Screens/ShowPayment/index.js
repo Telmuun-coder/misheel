@@ -594,8 +594,8 @@ const ShowPayment = (props) => {
 
   const payByCard = async () => {
 
-    NativeModules.PayByCard.pay(`${parseInt(localInfo.totalAmount) - parseInt(qrState.amount)}00`)
-    // NativeModules.PayByCard.pay('100')
+    // NativeModules.PayByCard.pay(`${parseInt(localInfo.totalAmount) - parseInt(qrState.amount)}00`)
+    NativeModules.PayByCard.pay('100')
       .then((res) => {
         console.log('hariu2: ', res);
         // {"code": "-22", "description": "Гүйлгээ цуцлагдсан", "invoice": null, "rrn": ""}
