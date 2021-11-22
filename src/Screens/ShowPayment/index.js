@@ -42,7 +42,7 @@ const ShowPayment = (props) => {
   LogBox.ignoreLogs([
     'Non-serializable values were found in the navigation state',
   ]);
-  const {PrintDiscount, PayByCard} = NativeModules;
+  const {PrintDiscount, PayByCard, Generator} = NativeModules;
   // const [tolow, setTolow] = useState(null);
   const {state} = useContext(UserState);
   const [modal, setModal] = useState(false);
@@ -345,8 +345,14 @@ const ShowPayment = (props) => {
         eBarimtList.pop();
 
         await AsyncStorage.multiRemove(['eBarimtPostData', 'eBarimtList']);
-        AsyncStorage.setItem('eBarimtList', JSON.stringify(eBarimtList)); //clear await
-        await PrintDiscount.printBarimt(JSON.stringify(printData));
+        AsyncStorage.setItem('eBarimtList', JSON.stringify(eBarimtList));
+        //A910 deer barimt hevleh
+        // await PrintDiscount.printBarimt(JSON.stringify(printData));
+        
+        //T post deeer hevleh
+        Generator.init(JSON.stringify(printData)).then(() => {
+          console.log("called init");
+        }).catch(e => console.log("Generator error: ", e));
 
 
         clearCache();
@@ -402,6 +408,7 @@ const ShowPayment = (props) => {
       txnId: localInfo.localTxnId,
       svRrn: serverInfo.svRrn,
       xlsRrn: serverInfo.xlsRrn,
+      openFlag: state.doorType /// haalga ongoiloh eseh
     };
     axios.defaults.headers.common = {
       Authorization: `Basic MTE0MDA1ODI2MzoxMTQwMDU4MjYz`,
@@ -594,8 +601,8 @@ const ShowPayment = (props) => {
 
   const payByCard = async () => {
 
-    // NativeModules.PayByCard.pay(`${parseInt(localInfo.totalAmount) - parseInt(qrState.amount)}00`)
-    NativeModules.PayByCard.pay('100')
+    NativeModules.PayByCard.pay(`${parseInt(localInfo.totalAmount) - parseInt(qrState.amount)}00`)
+    // NativeModules.PayByCard.pay('100')
       .then((res) => {
         console.log('hariu2: ', res);
         // {"code": "-22", "description": "Гүйлгээ цуцлагдсан", "invoice": null, "rrn": ""}

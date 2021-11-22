@@ -19,7 +19,7 @@ const Printer = ({navigation}) => {
     const [state, setState] = useState({});
     const [modal, setModal] = useState(false);
     const [spin, setSpin] = useState(false);
-    const {PrintDiscount, PayByCard} = NativeModules;
+    const {PrintDiscount, PayByCard, Generator} = NativeModules;
 
     useEffect(() => {
     //    console.log(route.params.data);
@@ -68,9 +68,16 @@ const Printer = ({navigation}) => {
     
             await AsyncStorage.removeItem('eBarimtList');
             AsyncStorage.setItem('eBarimtList', JSON.stringify(eBarimtList)); //clear await
-            await PrintDiscount.printBarimt(JSON.stringify(printData));    
-            // clearCache();
-            // route.params.deleteById();
+    
+            
+            //A910 deer barimt hevleh
+            // await PrintDiscount.printBarimt(JSON.stringify(printData));
+        
+            //T post deeer hevleh
+            Generator.init(JSON.stringify(printData)).then(() => {
+              console.log("called init");
+            }).catch(e => console.log("Generator error: ", e));
+
             navigation.goBack();
           } else {
             //aldaag haruulaad dahin oroldoh bolomj olgohiimu yaahy ahha

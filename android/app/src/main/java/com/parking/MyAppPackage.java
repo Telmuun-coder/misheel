@@ -24,6 +24,7 @@ public class MyAppPackage implements ReactPackage {
         modules.add(new PrintDiscount(reactContext));
         modules.add(new BarcodeModule(reactContext));
         modules.add(new PayByCard(reactContext));
+        modules.add(new Generator(reactContext));
 
         return modules;
     }

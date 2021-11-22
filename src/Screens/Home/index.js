@@ -315,14 +315,27 @@ const Home = (props) => {
       
       <StatusBar barStyle="dark-content" backgroundColor="transparent" />
 
-      <Controller
+      {/* <Controller
         getCar={getCar}
         onSearch={getCarNumber}
         clearData={() => {page.current = 0; searched.current = false; getCurrentCars(false)}}
         scanBarcode={scanBarcode}
-      />
+      /> */}
       
-      <CarNumbers navigation={props.navigation} data={data} deleteById={deleteById} onEndReached={nextPage} reaching={reaching}/>
+      <CarNumbers 
+        Controller={() => (
+          <Controller
+            getCar={getCar}
+            onSearch={getCarNumber}
+            clearData={() => {page.current = 0; searched.current = false; getCurrentCars(false)}}
+            scanBarcode={scanBarcode}
+          />)}
+        navigation={props.navigation} 
+        data={data} 
+        deleteById={deleteById} 
+        onEndReached={nextPage} 
+        reaching={reaching}
+      />
 
       <Modal animationType="fade" transparent={true} visible={modal.visible}>
         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>

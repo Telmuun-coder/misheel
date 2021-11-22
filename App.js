@@ -102,7 +102,7 @@ const App = () => {
     const setSetting = async () => {
       const simType = await AsyncStorage.getItem('simType');
       const localId = await AsyncStorage.getItem('localId');
-      console.log(simType);
+      // console.log(simType);
       if(simType) setSimcard(simType); 
       if(localId) setIp(localId);
     };
@@ -116,10 +116,10 @@ const App = () => {
         const tmp = JSON.parse(prevState);
         setState({...tmp});
       }
-      SplashScreen.hide();
       // setSplash(false);
     };
     restore();
+    SplashScreen.hide();
   },[]);
 
   return (

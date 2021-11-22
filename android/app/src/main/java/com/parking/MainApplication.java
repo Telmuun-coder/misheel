@@ -9,6 +9,8 @@ import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.soloader.SoLoader;
+import com.mid.glwrapper.IGL;
+import com.mid.glwrapper.impl.GL;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
@@ -20,6 +22,8 @@ public class MainApplication extends Application implements ReactApplication {
     private static PaxSdk paxSdk;
 
     private static MainApplication app;
+
+    private static IGL gl;
 
   private final ReactNativeHost mReactNativeHost =
       new ReactNativeHost(this) {
@@ -44,6 +48,7 @@ public class MainApplication extends Application implements ReactApplication {
         }
       };
 
+
     @Override
   public ReactNativeHost getReactNativeHost() {
     return mReactNativeHost;
@@ -61,6 +66,7 @@ public class MainApplication extends Application implements ReactApplication {
       } catch (Exception e) {
           e.printStackTrace();
       }
+      gl = GL.getInstance(this);
   }
 
   /**
@@ -100,5 +106,7 @@ public class MainApplication extends Application implements ReactApplication {
     public static MainApplication getApp() {
       return app;
     }
+
+    public static IGL getGl() {return gl;}
 
 }

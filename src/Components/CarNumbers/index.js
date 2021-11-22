@@ -16,6 +16,8 @@ const CarNumbers = (props) => {
     <FlatList
       onEndReachedThreshold={0.1}
       onEndReached={props.onEndReached}
+      ListHeaderComponent={props.Controller}
+      ListFooterComponentStyle={{width: WINDOWS_WIDTH}}
       ListFooterComponent={() => <Footer/>}
       data={props.data}
       style={styles.carNumbers}
@@ -32,7 +34,7 @@ export default CarNumbers;
 const styles = StyleSheet.create({
   carNumbers: {
   //  backgroundColor: 'red',
-    width: WINDOWS_WIDTH * 0.9,
+    width: WINDOWS_WIDTH,
   },
   indicator: {
     height: 20,

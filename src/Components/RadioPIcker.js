@@ -1,7 +1,7 @@
 import React,{useState, useImperativeHandle, forwardRef} from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-const RadioPIcker = ({simType = null, onPress},ref) => {
+const RadioPIcker = ({simType = null, onPress, values, names},ref) => {
     const [value, setValue] = useState(simType);
 
     const pick = (type) => {
@@ -12,22 +12,21 @@ const RadioPIcker = ({simType = null, onPress},ref) => {
     useImperativeHandle(ref, () => ({
         setTypeValue(value){
             setValue(value);
-            console.log("setting in picker:", value)
         }
     }));
     return (
         <View style={styles.container}>
-            <TouchableOpacity style={styles.picker} onPress={() => pick('mobicom')}>
+            <TouchableOpacity style={styles.picker} onPress={() => pick(values[0])}>
                 <View style={styles.radioCon}>
-                    {value == 'mobicom' && <View style={styles.dot}/>}
+                    {value == values[0] && <View style={styles.dot}/>}
                 </View>
-                <Text style={styles.text}>Mobicom</Text>
+                <Text style={styles.text}>{names[0]}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.picker} onPress={() => pick('unitel')}>
+            <TouchableOpacity style={styles.picker} onPress={() => pick(values[1])}>
                 <View style={styles.radioCon}>
-                    {value == 'unitel' && <View style={styles.dot}/>}
+                    {value == values[1] && <View style={styles.dot}/>}
                 </View>
-                <Text style={styles.text}>Unitel</Text>
+                <Text style={styles.text}>{names[1]}</Text>
             </TouchableOpacity>
         </View>
     )

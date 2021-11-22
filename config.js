@@ -35,4 +35,8 @@ export const setSimcard = (simType) => {
   AsyncStorage.setItem('simType', simType);
 };
 
+export const setDoorType = (doorType) => {
+  AsyncStorage.setItem('doorType', doorType);
+};
+
 export default config;

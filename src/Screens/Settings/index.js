@@ -6,6 +6,7 @@ import {
   View,
   TextInput,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import config, {setIp, setSimcard, sim} from '../../../config';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -16,11 +17,13 @@ const {width, height} = Dimensions.get('window');
 
 const Settings = ({navigation}) => {
   const pickerRef = useRef(null);
-  const {setStater, state} = useContext(UserState);
+  const doorRef = useRef(null);
+  const {setStater, state, resetStateCache} = useContext(UserState);
   const [localIp, setLocalIp] = useState(null);
 // const [companyId, setCompanyId] = useState(null);
   const [nonValid, setNonValid] = useState(false);
   const [sim, setSim] = useState(null);
+  const [door, setDoor] = useState(state.doorType);
   //   console.log()
   const valid = (localIp) => {
     setLocalIp(localIp);
@@ -31,6 +34,11 @@ const Settings = ({navigation}) => {
   const changeSim = (simType) => {
     setSim(simType);
     setSimcard(simType);
+  };
+
+  const changeDoor = (doorType) => {
+    setDoor(doorType);
+    setStater('doorType',doorType,true);
   };
 
   const handleSave = () => {
@@ -60,7 +68,8 @@ const Settings = ({navigation}) => {
   },[])
 
   return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+    <View style={{flex: 1,justifyContent: 'center', alignItems: 'center'}}>
+      {/* <ScrollView contentContainerStyle={{justifyContent: 'center', alignItems: 'center'}}></ScrollView> */}
       <View style={styles.row}>
         <Text style={styles.title}>Local IP:</Text>
         <TextInput
@@ -89,7 +98,8 @@ const Settings = ({navigation}) => {
         />
       </View> */}
 
-      <RadioPIcker simType={sim} onPress={changeSim} ref={pickerRef}/>
+      <RadioPIcker simType={sim} onPress={changeSim} ref={pickerRef} values={['mobicom', 'unitel']} names={['Mobicom', 'Unitel']}/>
+      <RadioPIcker simType={door} onPress={changeDoor} ref={doorRef} values={['1', '0']} names={['Хаалт нээх', 'Хаалт нээхгүй']}/>
     
       <TouchableHighlight
         style={[styles.btnSave, nonValid && styles.dis]}

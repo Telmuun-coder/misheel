@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 2,
     marginVertical: 10,
-    marginHorizontal: (width*.9 - 130*2)/4,
+    marginHorizontal: (width*.9 - 130*2)/4+width*0.025,
     // marginVertical: 50
   },
   number: {

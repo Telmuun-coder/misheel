@@ -12,6 +12,7 @@ const UserStore = (props) => {
   const [showSplash, setShowSplash] = useState(true);
   const [mount, setMount] = useState(true);
   const [state, setState] = useState({
+    doorType: '1',
     userRole: null,
     token: null,
     organization_id: null,
@@ -24,10 +25,12 @@ const UserStore = (props) => {
     parkingList: [],
   });
 
-  const setStater = (valName, val) => {
-    // const oldState = state;
-    // oldState[valName] = val;
-    // setState({...oldState});
+  const setStater = (valName, val, setStateCache = false) => {
+    if(setStateCache) {
+      AsyncStorage.removeItem('state').then(() => {
+        AsyncStorage.setItem('state', JSON.stringify({...state, [valName]: val}));
+      });
+    }
     setState({...state, [valName]: val});
   };
 
@@ -62,8 +65,8 @@ const UserStore = (props) => {
               parkingList: res.data.entity.paUser.paParkingList,
               parkingId: res.data.entity.paUser.paParkingList[0].parkingId,
               userRole: res.data.entity.paUser.paRoleList[0].code,
-              // organization_id: res.data.entity.paUser.paParkingList[0].organizationId
-              organization_id: 29
+              organization_id: res.data.entity.paUser.paParkingList[0].organizationId
+              // organization_id: 29
             };
             remember === 'had' && cacheState(tmp);
             setStaterAll(tmp);
@@ -92,6 +95,11 @@ const UserStore = (props) => {
   const cacheState = async (tmp) => {
     await AsyncStorage.setItem('state', JSON.stringify(tmp));
   };
+
+  const resetStateCache = async () => {
+    await AsyncStorage.removeItem('state');
+    AsyncStorage.setItem('state', JSON.stringify(state));
+  }
 
   // useEffect(() => {
   //   const restore = async () => {

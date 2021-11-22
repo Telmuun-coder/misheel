@@ -76,7 +76,6 @@ import com.android.build.OutputFile
  *   extraPackagerArgs: []
  * ]
  */
-
 project.ext.react = [
     enableHermes: false,  // clean and rebuild if changing
 ]
@@ -130,10 +129,11 @@ android {
 
     defaultConfig {
         applicationId "com.parking"
-         minSdkVersion rootProject.ext.minSdkVersion
+         minSdkVersion 19
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        multiDexEnabled true
     }
     splits {
         abi {
@@ -214,6 +214,8 @@ dependencies {
     }
 //    implementation files('libs/NeptuneLiteApi_V3.07.02_20191025.jar')
     implementation files('libs/NeptuneLiteApi_V2.04.00_20180329.jar')
+    implementation 'com.android.support:multidex:1.0.3'
+    implementation project(':glwrapper')
 }
 
 // Run this once to be able to run the application with BUCK
