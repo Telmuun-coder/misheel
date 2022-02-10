@@ -40,6 +40,7 @@ buck-out/
 \.buckd/
 *.keystore
 !debug.keystore
+.hprof
 
 # fastlane
 #
@@ -57,3 +58,4 @@ buck-out/
 
 # CocoaPods
 /ios/Pods/
+/android/java_pid15320.hprof

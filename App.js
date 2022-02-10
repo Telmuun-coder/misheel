@@ -1,8 +1,8 @@
-import React, {useState, useContext, useLayoutEffect, useEffect} from 'react';
+import React, { useState, useContext, useLayoutEffect, useEffect } from 'react';
 import 'react-native-gesture-handler';
-import {createStackNavigator} from '@react-navigation/stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import 'react-native-gesture-handler';
-import {NavigationContainer} from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import {
   createDrawerNavigator,
   DrawerContentScrollView,
@@ -13,12 +13,12 @@ import ShowPayment from './src/Screens/ShowPayment';
 import QRGenerate from './src/Screens/qrGenerate';
 import InputDiscountAmount from './src/Screens/InputDiscountAmount';
 import Login from './src/Screens/Login';
-import {UserState} from './src/Context/UserStore';
+import { UserState } from './src/Context/UserStore';
 import PayByCash from './src/Screens/PayByCash';
 import DrawerContent from './src/Screens/DrawerContent';
 import Splash from './src/Screens/Splash';
 import Settings from './src/Screens/Settings';
-import {  setSimcard, setIp } from './config';
+import { setSimcard, setIp } from './config';
 import AsyncStorage from '@react-native-community/async-storage';
 import SplashScreen from 'react-native-splash-screen';
 import EbarimtList from './src/Screens/EbarimtList';
@@ -54,7 +54,7 @@ const Hanburner = () => {
 const Stack = createStackNavigator();
 
 const MyStack = () => {
-  const {state} = useContext(UserState);
+  const { state } = useContext(UserState);
   let returnScreen;
   // Зогсоолын үүдэндэх пос
   if (state.userRole === 'POSTPOS') {
@@ -84,7 +84,7 @@ const MyStack = () => {
       <Stack.Screen
         name="InputDiscountAmount"
         component={InputDiscountAmount}
-        options={{headerShown: false}}
+        options={{ headerShown: false }}
       />
     );
   }
@@ -95,7 +95,7 @@ const MyStack = () => {
 const authStack = createStackNavigator();
 
 const App = () => {
-  const {state, showSplash, setState} = useContext(UserState);
+  const { state, showSplash, setState } = useContext(UserState);
   const [splash, setSplash] = useState(true);
 
   useLayoutEffect(() => {
@@ -103,45 +103,44 @@ const App = () => {
       const simType = await AsyncStorage.getItem('simType');
       const localId = await AsyncStorage.getItem('localId');
       // console.log(simType);
-      if(simType) setSimcard(simType); 
-      if(localId) setIp(localId);
+      if (simType) setSimcard(simType);
+      if (localId) setIp(localId);
     };
     setSetting();
-  },[]);
+  }, []);
 
-  useEffect(() =>{
+  useEffect(() => {
     const restore = async () => {
       const prevState = await AsyncStorage.getItem('state');
       if (prevState != null) {
         const tmp = JSON.parse(prevState);
-        setState({...tmp});
+        setState({ ...tmp });
       }
-      // setSplash(false);
+      SplashScreen.hide();
     };
     restore();
-    SplashScreen.hide();
-  },[]);
+  }, []);
 
   return (
     <NavigationContainer>
       {
-      // splash ? (
-      //   <Splash />
-      // ) : 
-      state.token ? (
-        <MyStack />
-      ) : (
-        <authStack.Navigator>
-          <authStack.Screen
-            name="Login"
-            component={Login}
-            options={{headerShown: false}}
-          />
-          <authStack.Screen
-            name="Settings" component={Settings}
-          />
-        </authStack.Navigator>
-      )}
+        // splash ? (
+        //   <Splash />
+        // ) : 
+        state.token ? (
+          <MyStack />
+        ) : (
+          <authStack.Navigator>
+            <authStack.Screen
+              name="Login"
+              component={Login}
+              options={{ headerShown: false }}
+            />
+            <authStack.Screen
+              name="Settings" component={Settings}
+            />
+          </authStack.Navigator>
+        )}
     </NavigationContainer>
   );
 };

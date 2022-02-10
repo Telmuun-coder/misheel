@@ -1,17 +1,17 @@
-import React, {useState, useEffect, useContext, useRef} from 'react';
-import {StyleSheet, View, TextInput, Dimensions} from 'react-native';
-import {useIsFocused} from '@react-navigation/native';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { StyleSheet, View, TextInput, Dimensions } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import Number from '../Number';
 import Numbers from '../Numbers';
 import Button from '../Button';
 import ScannButton from '../ScannButton';
-import {UserState} from '../../Context/UserStore';
+import { UserState } from '../../Context/UserStore';
 
-const {width, height} = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const Controller = (props) => {
   const inputRef = useRef(null);
-  const {state} = useContext(UserState);
+  const { state } = useContext(UserState);
   const [selectedValue, setSelectedValue] = useState('0000');
   const isFocused = useIsFocused();
   const clear = () => {
@@ -24,11 +24,7 @@ const Controller = (props) => {
   }, [isFocused]);
 
   return (
-    <View
-      style={[
-        styles.numbers,
-        state.userRole === 'SELFPOS' && {paddingHorizontal: '10%'},
-      ]}>
+    <View style={[styles.numbers, state.userRole === 'SELFPOS' && { paddingHorizontal: '10%' }]}>
       <TextInput
         ref={inputRef}
         style={styles.input}
@@ -55,29 +51,9 @@ const Controller = (props) => {
           }}
         />
       </View>
-      {/* <Number
-        value={selectedValue}
-        index={0}
-        click={(e) => setSelectedValue(e)}
-      />
-      <Number
-        value={selectedValue}
-        index={1}
-        click={(e) => setSelectedValue(e)}
-      />
-      <Number
-        value={selectedValue}
-        index={2}
-        click={(e) => setSelectedValue(e)}
-      />
-      <Number
-        value={selectedValue}
-        index={3}
-        click={(e) => setSelectedValue(e)}
-      /> */}
       <View style={styles.buttons}>
         {state.userRole == 'POSTPOS' && (
-          <ScannButton onPress={props.scanBarcode} disabled/>
+          <ScannButton onPress={props.scanBarcode} disabled />
         )}
         <Button icon="car" onPress={props.getCar} />
         <Button icon="reload1" onPress={clear} />
@@ -101,6 +77,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     // paddingHorizontal: '10%',
     paddingHorizontal: '3%',
+    // position: 'absolute',
+    // top: 0
   },
   input: {
     position: 'absolute',

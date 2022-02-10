@@ -1,17 +1,22 @@
-import React, {useState, useEffect} from 'react';
-import {View, Text, StyleSheet, Dimensions, TextInput} from 'react-native';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { View, Text, StyleSheet, Dimensions, TextInput } from 'react-native';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
-const Input = (props) => {
+const Input = forwardRef((props, ref) => {
   const [val, setVal] = useState(props.value ? props.value : '');
   // const [red, setRed] = useState(props.danger);
   // useEffect(() => {
   //   setRed(props.danger);
   // }, [props.danger]);
+  useImperativeHandle(ref, () => ({
+    setValue: (value) => {
+      setVal(value);
+    }
+  }));
   return (
-    <View style={[styles.inputContainer, props.danger && styles.danger]}>
+    <View style={[styles.inputContainer, props.style, props.danger && styles.danger]}>
       <Text style={styles.type}>{props.title}</Text>
       <TextInput
         // onFocus={() => {
@@ -33,15 +38,15 @@ const Input = (props) => {
           props.type === 'email'
             ? 'email-address'
             : props.type === 'number'
-            ? 'phone-pad'
-            : 'default'
+              ? 'phone-pad'
+              : 'default'
         }
         secureTextEntry={props.type === 'password' ? true : false}
         multiline={props.multiline ? true : null}
       />
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   inputContainer: {
@@ -68,7 +73,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     borderWidth: 0,
   },
-  danger: {borderWidth: 0.5, borderColor: 'red'},
+  danger: { borderWidth: 0.5, borderColor: 'red' },
 });
 
 export default Input;

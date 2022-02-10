@@ -1,4 +1,4 @@
-import React, {useState, useLayoutEffect, useRef, useContext} from 'react';
+import React, { useState, useLayoutEffect, useRef, useContext, useEffect } from 'react';
 import {
   TouchableHighlight,
   StyleSheet,
@@ -8,19 +8,19 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
-import config, {setIp, setSimcard, sim} from '../../../config';
+import config, { setIp, setSimcard, sim } from '../../../config';
 import AsyncStorage from '@react-native-community/async-storage';
 import RadioPIcker from '../../Components/RadioPIcker';
 import { UserState } from '../../Context/UserStore';
 
-const {width, height} = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
-const Settings = ({navigation}) => {
+const Settings = ({ navigation }) => {
   const pickerRef = useRef(null);
   const doorRef = useRef(null);
-  const {setStater, state, resetStateCache} = useContext(UserState);
+  const { setStater, state, resetStateCache } = useContext(UserState);
   const [localIp, setLocalIp] = useState(null);
-// const [companyId, setCompanyId] = useState(null);
+  // const [companyId, setCompanyId] = useState(null);
   const [nonValid, setNonValid] = useState(false);
   const [sim, setSim] = useState(null);
   const [door, setDoor] = useState(state.doorType);
@@ -38,7 +38,7 @@ const Settings = ({navigation}) => {
 
   const changeDoor = (doorType) => {
     setDoor(doorType);
-    setStater('doorType',doorType,true);
+    setStater('doorType', doorType, true);
   };
 
   const handleSave = () => {
@@ -48,27 +48,30 @@ const Settings = ({navigation}) => {
     navigation.goBack();
   };
 
+  useEffect(() => {
+    if (state.doorType) setDoor(state.doorType)
+  }, []);
 
-  useLayoutEffect(()=>{
+
+  useLayoutEffect(() => {
     const getInitValue = async () => {
       const simType = await AsyncStorage.getItem('simType');
       const localIp = await AsyncStorage.getItem('localId');
       console.log("sim:", simType);
-      
-      if(simType) {
+
+      if (simType) {
         setSim(simType);
         pickerRef.current.setTypeValue(simType);
-      }; 
-      if(localIp) setLocalIp(localIp);
-
+      };
+      if (localIp) setLocalIp(localIp);
 
       // setCompanyId(state.organization_id);
     }
     getInitValue();
-  },[])
+  }, [])
 
   return (
-    <View style={{flex: 1,justifyContent: 'center', alignItems: 'center'}}>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       {/* <ScrollView contentContainerStyle={{justifyContent: 'center', alignItems: 'center'}}></ScrollView> */}
       <View style={styles.row}>
         <Text style={styles.title}>Local IP:</Text>
@@ -98,9 +101,9 @@ const Settings = ({navigation}) => {
         />
       </View> */}
 
-      <RadioPIcker simType={sim} onPress={changeSim} ref={pickerRef} values={['mobicom', 'unitel']} names={['Mobicom', 'Unitel']}/>
-      <RadioPIcker simType={door} onPress={changeDoor} ref={doorRef} values={['1', '0']} names={['Хаалт нээх', 'Хаалт нээхгүй']}/>
-    
+      <RadioPIcker simType={sim} onPress={changeSim} ref={pickerRef} values={['mobicom', 'unitel']} names={['Mobicom', 'Unitel']} />
+      <RadioPIcker simType={door} onPress={changeDoor} ref={doorRef} values={['1', '0']} names={['Хаалт нээх', 'Хаалт нээхгүй']} />
+
       <TouchableHighlight
         style={[styles.btnSave, nonValid && styles.dis]}
         activeOpacity={0.6}

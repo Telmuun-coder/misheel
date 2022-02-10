@@ -1,13 +1,13 @@
-import React, {useState, createContext, useMemo, useEffect, useLayoutEffect} from 'react';
-import {NativeModules} from 'react-native';
+import React, { useState, createContext, useMemo, useEffect, useLayoutEffect } from 'react';
+import { NativeModules } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-community/async-storage';
-import config, {setSimcard, setIp} from '../../config';
+import config, { setSimcard, setIp } from '../../config';
 
 export const UserState = createContext();
 
 const UserStore = (props) => {
-  const {PayByCard} = NativeModules;
+  const { PayByCard } = NativeModules;
   const [spin, setSpin] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [mount, setMount] = useState(true);
@@ -26,16 +26,16 @@ const UserStore = (props) => {
   });
 
   const setStater = (valName, val, setStateCache = false) => {
-    if(setStateCache) {
+    if (setStateCache) {
       AsyncStorage.removeItem('state').then(() => {
-        AsyncStorage.setItem('state', JSON.stringify({...state, [valName]: val}));
+        AsyncStorage.setItem('state', JSON.stringify({ ...state, [valName]: val }));
       });
     }
-    setState({...state, [valName]: val});
+    setState({ ...state, [valName]: val });
   };
 
   const setStaterAll = (values) => {
-    setState({...state, ...values});
+    setState({ ...state, ...values });
   };
 
   const auth = useMemo(
@@ -55,7 +55,7 @@ const UserStore = (props) => {
           );
           if (res.data.message === 'Амжилттай') {
             // console.log("loginData:",JSON.stringify(res.data.entity));
-            console.log("ORG ID:",res.data.entity.paUser.paParkingList[0].organizationId);
+            console.log("ORG ID:", res.data.entity.paUser.paParkingList[0].organizationId);
             let tmp = {
               error: null,
               token: res.data.entity.token,
@@ -68,7 +68,9 @@ const UserStore = (props) => {
               organization_id: res.data.entity.paUser.paParkingList[0].organizationId
               // organization_id: 29
             };
-            remember === 'had' && cacheState(tmp);
+            if (remember === 'had') AsyncStorage.setItem('username', phoneNumber);
+
+            cacheState(tmp);
             setStaterAll(tmp);
             setSpin(false);
           } else {
@@ -112,7 +114,7 @@ const UserStore = (props) => {
   //   };
   //   restore();
   // }, []);
-  
+
   return (
     <UserState.Provider
       value={{

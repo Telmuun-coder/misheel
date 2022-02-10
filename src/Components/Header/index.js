@@ -1,18 +1,19 @@
 import React from 'react';
-import {StyleSheet, Text, View, Dimensions} from 'react-native';
-import {TouchableHighlight} from 'react-native-gesture-handler';
+import { StyleSheet, Text, View, Dimensions } from 'react-native';
+import { TouchableHighlight } from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/AntDesign';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
-const Header = ({callback, title}) => {
+const Header = ({ callback, title }) => {
   return (
     <View style={styles.container}>
       <View style={styles.icon}>
         <TouchableHighlight
-          activeOpacity={0.6}
-          underlayColor="gray"
+          hitSlop={{ top: 20, left: 20, right: 30, bottom: 20 }}
+          activeOpacity={0.8}
+          underlayColor="#707070"
           onPress={callback}>
           <View style={styles.touch}>
             <Icon name="arrowleft" color="black" size={22} />
@@ -45,7 +46,7 @@ const styles = StyleSheet.create({
     elevation: 5,
     marginBottom: 10,
   },
-  title: {fontWeight: 'bold', fontSize: 20, alignSelf: 'center'},
+  title: { fontWeight: 'bold', fontSize: 20, alignSelf: 'center' },
   icon: {
     position: 'absolute',
     left: 8,

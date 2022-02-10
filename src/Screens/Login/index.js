@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useContext} from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -13,21 +13,35 @@ import Input from '../../Components/Input';
 import Button from '../../Components/ButtonL';
 import Icon from 'react-native-vector-icons/AntDesign';
 import Spinner from '../../Components/Spinner';
-import {UserState} from '../../Context/UserStore';
+import { UserState } from '../../Context/UserStore';
+import AsyncStorage from '@react-native-community/async-storage';
 // import ErrorMessage from '../../Components/ErrorMessage';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
-const Login = ({navigation}) => {
-  const {auth, spin} = useContext(UserState);
+const Login = ({ navigation }) => {
+  const { auth, spin } = useContext(UserState);
+  const usernameRef = useRef();
   const [rem, setRem] = useState('had');
-  const [number, setNumber] = useState('postpos'); //88564757,99887788,99115544
+  const [number, setNumber] = useState(''); //88564757,99887788,99115544
   const [password, setPassword] = useState('12345678'); //12345678
+
+  useEffect(() => {
+    const getLoginInfo = async () => {
+      const username = await AsyncStorage.getItem('username');
+      console.log('username: ', username);
+      if (username) {
+        setNumber(username);
+        usernameRef.current.setValue(username);
+      }
+    }
+    getLoginInfo();
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={{alignItems: 'center'}}>
+      <View style={{ alignItems: 'center' }}>
         <Image
           style={styles.logo}
           source={require('../../Images/ParkingLogin.png')}
@@ -42,11 +56,12 @@ const Login = ({navigation}) => {
         }}>
         {/* <ErrorMessage /> */}
         <Input
+          ref={usernameRef}
           value={number}
           onChange={(e) => setNumber(e)}
-          title="Бүртгэлтэй утасны дугаар"
+          title="Нэвтрэх нэр"
           placeHolder=""
-          // type="number"
+        // type="number"
         />
         <Input
           onChange={(e) => setPassword(e)}
@@ -64,9 +79,9 @@ const Login = ({navigation}) => {
               color={rem === 'had' ? '#006AB5' : '#8F8F8F'}
               size={25}
             />
-            <Text style={{marginLeft: 5}}>Сануулах</Text>
+            <Text style={{ marginLeft: 5 }}>Сануулах</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={{justifyContent: 'center'}}>
+          <TouchableOpacity style={{ justifyContent: 'center' }}>
             <Text>Нууц үг мартсан</Text>
           </TouchableOpacity>
         </View>

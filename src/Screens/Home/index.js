@@ -1,4 +1,4 @@
-import React, {useContext, useState, useEffect, useRef} from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -19,17 +19,17 @@ import Icon from 'react-native-vector-icons/Ionicons';
 
 import CarNumbers from '../../Components/CarNumbers';
 import Controller from '../../Components/Controller';
-import {UserState} from '../../Context/UserStore';
+import { UserState } from '../../Context/UserStore';
 import Spinner from '../../Components/Spinner';
 import config from '../../../config';
 import ScannButton from '../../Components/ScannButton';
 import dateFormat from 'dateformat';
 import { unionBy } from 'lodash';
 
-const {width, height} = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const Home = (props) => {
-  const {PayByCard} = NativeModules;
+  const { PayByCard } = NativeModules;
   const page = useRef(0);
   const getNextPage = useRef(false);
   const searched = useRef(false);
@@ -40,7 +40,7 @@ const Home = (props) => {
     load: true,
     data: {},
   });
-  const {setStater, state} = useContext(UserState);
+  const { setStater, state } = useContext(UserState);
   const [data, setData] = useState([]);
 
   const scanBarcode = () => {
@@ -89,17 +89,19 @@ const Home = (props) => {
   };
 
   const getCarNumber = async (number) => {
-    if (number.length < 4) alert('Та хайх дугаараа оруулна уу.');
+    if (number.length < 4)
+      Alert.alert(
+        'Уучлаарай!',
+        'Та хайх дугаараа оруулна уу.',
+      );
     else {
       //Keyboard hide
       Keyboard.dismiss();
-      axios.defaults.headers.common = {
-        Authorization: `Basic MTE0MDA1ODI2MzoxMTQwMDU4MjYz`,
-      };
+      axios.defaults.headers.common = { Authorization: `Basic MTE0MDA1ODI2MzoxMTQwMDU4MjYz` };
       await PayByCard.doWifi();
 
       setSpin(true);
-      console.log("searching: ", config.localIp +':6080/parking-local/paParkingTxn/findByPlateNumber?plateNumber=' + number);
+      console.log("searching: ", config.localIp + ':6080/parking-local/paParkingTxn/findByPlateNumber?plateNumber=' + number);
       axios.get(config.localIp + ':6080/parking-local/paParkingTxn/findByPlateNumber?plateNumber=' + number)
         .then((res) => {
           setSpin(false);
@@ -120,42 +122,34 @@ const Home = (props) => {
 
 
   const getCurrentCars = async (noLoading = false) => {
-    if(getNextPage.current) return;
+    if (getNextPage.current) return;
 
     getNextPage.current = true;
 
-    axios.defaults.headers.common = {
-      Authorization: `Basic MTE0MDA1ODI2MzoxMTQwMDU4MjYz`,
-    };
+    axios.defaults.headers.common = { Authorization: `Basic MTE0MDA1ODI2MzoxMTQwMDU4MjYz` };
+
     try {
       await PayByCard.doWifi();
       !noLoading && setSpin(true);
       noLoading && setReaching(true);
       console.log("calling page: ", page.current);
-      axios.get(
-        `${config.localIp}:6080/parking-local/paParkingTxn/currentCars?pageNumber=${page.current}`, //?pageNumber${page.current}
-      ).then(currentCars => {
-        
-        console.log('RES LENGTH:',currentCars.data.entity.length );
-        if(currentCars.data.status == '000' && currentCars.data.entity.length > 0) {
+      axios.get(`${config.localIp}:6080/parking-local/paParkingTxn/currentCars?pageNumber=${page.current}`).then(currentCars => {
+
+        console.log('RES LENGTH:', currentCars.data.entity.length);
+        if (currentCars.data.status == '000' && currentCars.data.entity.length > 0) {
           page.current++;
-          noLoading 
-          ? setData(prev => {
-            // let result = unionBy(prev, currentCars.data.entity, 'txnId');
-            // return result;
-            
-            return([...prev, ...currentCars.data.entity])
-          })
-          : setData([...currentCars.data.entity]);
+          if (noLoading)
+            setData(prev => ([...prev, ...currentCars.data.entity]))
+          else setData(currentCars.data.entity);
         }
         setSpin(false);
         setReaching(false);
       });
     } catch (error) {
       console.log('get Current number error', error);
-      
       setSpin(false);
-    }finally{
+      setReaching(false);
+    } finally {
       getNextPage.current = false;
     }
   };
@@ -199,10 +193,10 @@ const Home = (props) => {
     let link = config.send;
     link = link.replace(/29/g, '26');
     const eBarimt = await AsyncStorage.getItem('isCalled');
-    if(dateFormat(new Date(eBarimt), 'yyyy-mm-dd') == dateFormat(new Date(), 'yyyy-mm-dd')) return;
+    if (dateFormat(new Date(eBarimt), 'yyyy-mm-dd') == dateFormat(new Date(), 'yyyy-mm-dd')) return;
 
     await PayByCard.doData();
-    axios.get(link + state.organization_id, { headers: { Authorization: null }})
+    axios.get(link + state.organization_id, { headers: { Authorization: null } })
       .then((res) => {
         // res.data.success
         console.log("e barimt send: ", res.data);
@@ -215,7 +209,7 @@ const Home = (props) => {
 
     const checkCache = async () => {
       let keys = await AsyncStorage.getAllKeys();
-      keys = keys.filter(e => (e != 'simType' && e != 'localId' && e != 'isCalled' && e != 'eBarimtList'));
+      keys = keys.filter(e => (e != 'simType' && e != 'localId' && e != 'isCalled' && e != 'eBarimtList' && e != 'username'));
       const AlertBeforeGoBack = () =>
         Alert.alert(
           'Анхаар!',
@@ -233,11 +227,11 @@ const Home = (props) => {
             {
               text: 'ТИЙМ',
               onPress: () => {
-                props.navigation.navigate('ShowPayment', {id: null, deleteById: () => deleteById(0)});
+                props.navigation.navigate('ShowPayment', { id: null, deleteById: () => deleteById(0) });
               },
             },
           ],
-          {cancelable: false},
+          { cancelable: false },
         );
       if (keys.length > 1) {
         AlertBeforeGoBack();
@@ -256,18 +250,11 @@ const Home = (props) => {
     await PayByCard.doWifi();
 
     setSpin(true);
-    axios
-      .get(
-        config.localIp +
-          ':6080/parking-local/paParkingTxn/findByPlateNumber?plateNumber=' +
-          platenumber,
-      )
+    axios.get(config.localIp + ':6080/parking-local/paParkingTxn/findByPlateNumber?plateNumber=' + platenumber)
       .then((res) => {
         setSpin(false);
         if (res.data.message === 'Амжилттай') {
-          // console.log("getone: ", res.data.entity[0].txnId);
-          // res.data.entity.plateNumber
-          props.navigation.navigate('ShowPayment', {id: res.data.entity[0].txnId, deleteById: () => deleteById(res.data.entity[0].txnId)});
+          props.navigation.navigate('ShowPayment', { id: res.data.entity[0].txnId, deleteById: () => deleteById(res.data.entity[0].txnId) });
         } else {
           alert(res.data.message);
         }
@@ -280,22 +267,8 @@ const Home = (props) => {
   }
 
   const payByModal = () => {
-    setModal((prev) => ({
-      ...prev,
-      visible: false,
-    }));
-    console.log("modal data plate number: ", modal.data.plateNumber);
+    setModal((prev) => ({ ...prev, visible: false }));
     getExiting(modal.data.plateNumber);
-
-    // let exitingcar = data.find(e => e.plateNumber.toUpperCase() == modal.data.plateNumber.toUpperCase());
-
-    // console.log("exiting car: ", exitingcar);
-    // if(exitingcar)
-    //   props.navigation.navigate('ShowPayment', {id: exitingcar.txnId, deleteById: () => deleteById(exitingcar.txnId)});
-    // else {
-    //   // alert('Таны хайсан дугаарын мэдээлэл олдсонгүй.');
-    //   getExiting(modal.data.plateNumber);
-    // }
   };
 
   const deleteById = (id) => {
@@ -304,7 +277,7 @@ const Home = (props) => {
 
   const nextPage = () => {
     // console.log("NEXT2");
-    if(!searched.current){
+    if (!searched.current) {
       // console.log('calling next page')
       getCurrentCars(true);
     }
@@ -312,7 +285,7 @@ const Home = (props) => {
 
   return (
     <View style={styles.container}>
-      
+
       <StatusBar barStyle="dark-content" backgroundColor="transparent" />
 
       {/* <Controller
@@ -321,28 +294,28 @@ const Home = (props) => {
         clearData={() => {page.current = 0; searched.current = false; getCurrentCars(false)}}
         scanBarcode={scanBarcode}
       /> */}
-      
-      <CarNumbers 
+
+      <CarNumbers
         Controller={() => (
           <Controller
             getCar={getCar}
             onSearch={getCarNumber}
-            clearData={() => {page.current = 0; searched.current = false; getCurrentCars(false)}}
+            clearData={() => { page.current = 0; searched.current = false; getCurrentCars(false) }}
             scanBarcode={scanBarcode}
           />)}
-        navigation={props.navigation} 
-        data={data} 
-        deleteById={deleteById} 
-        onEndReached={nextPage} 
+        navigation={props.navigation}
+        data={data}
+        deleteById={deleteById}
+        onEndReached={nextPage}
         reaching={reaching}
       />
 
       <Modal animationType="fade" transparent={true} visible={modal.visible}>
-        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <TouchableWithoutFeedback onPress={() => setModal((prev) => ({...prev, visible: false}))}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <TouchableWithoutFeedback onPress={() => setModal((prev) => ({ ...prev, visible: false }))}>
             <View style={styles.shadow}>
 
-          {/* <View
+              {/* <View
             style={styles.shadow}
             onStartShouldSetResponder={() =>
               setModal((prev) => ({...prev, visible: false}))
@@ -353,7 +326,7 @@ const Home = (props) => {
                 <TouchableOpacity
                   activeOpacity={0.7}
                   style={styles.close}
-                  onPress={() => setModal((prev) => ({...prev, visible: false}))}>
+                  onPress={() => setModal((prev) => ({ ...prev, visible: false }))}>
                   <Icon name="ios-close" size={30} color="#7E7E7E" />
                 </TouchableOpacity>
                 <Text>Гарах машины дугаар:</Text>
@@ -361,7 +334,7 @@ const Home = (props) => {
                   <ActivityIndicator
                     size="large"
                     color="black"
-                    style={{marginTop: -80}}
+                    style={{ marginTop: -80 }}
                   />
                 ) : (
                   <>
@@ -372,11 +345,11 @@ const Home = (props) => {
                       <TouchableOpacity
                         disabled={modal.data == null}
                         onPress={payByModal}
-                        style={[styles.miniBtn, {elevation: 3}, modal.data == null && {opacity: 0.5}]}>
+                        style={[styles.miniBtn, { elevation: 3 }, modal.data == null && { opacity: 0.5 }]}>
                         <Text style={styles.miniBtnTitle}>Төлөх</Text>
                       </TouchableOpacity>
                       <TouchableOpacity style={styles.miniBtn} onPress={getCar}>
-                        <Text style={{fontSize: 16}}>Дахин шалгах</Text>
+                        <Text style={{ fontSize: 16 }}>Дахин шалгах</Text>
                       </TouchableOpacity>
                     </View>
                   </>

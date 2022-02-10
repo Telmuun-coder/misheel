@@ -179,7 +179,7 @@ public class Generator extends ReactContextBaseJavaModule implements LifecycleEv
 
                     page.addLine()
                             .addUnit(page.createUnit()
-                                    .setText("Хугацаа: " + ebarimt.getString("time"))
+                                    .setText("Зогссон хугацаа: " + ebarimt.getString("time") + " мин")
                                     .setFontSize(16)
                                     .setWeight(1.0f)
                                     .setGravity(Gravity.FILL));
@@ -187,6 +187,19 @@ public class Generator extends ReactContextBaseJavaModule implements LifecycleEv
                     page.addLine().adjustTopSpace(5);
                 }
 
+                if (ebarimt.getString("companyName") != "" && !ebarimt.getString("companyName").isEmpty()) {
+
+                    page.addLine().adjustTopSpace(10);
+
+                    page.addLine()
+                            .addUnit(page.createUnit()
+                                    .setText("Байгууллагын нэр: " + ebarimt.getString("companyName"))
+                                    .setFontSize(16)
+                                    .setWeight(1.0f)
+                                    .setGravity(Gravity.FILL));
+
+                    page.addLine().adjustTopSpace(5);
+                }
 
                 page.addLine().addUnit(page.createUnit()
                         .setText(MainApplication.getApp().getString(R.string.receipt_sign_line))
@@ -198,7 +211,7 @@ public class Generator extends ReactContextBaseJavaModule implements LifecycleEv
 
                     page.addLine()
                             .addUnit(page.createUnit()
-                                    .setText("Дүн: " + ebarimt.getString("amount"))
+                                    .setText("Дүн: " + ebarimt.getString("amount") + "₮")
                                     .setFontSize(20)
                                     .setWeight(1.0f)
                                     .setGravity(Gravity.FILL));
@@ -212,7 +225,7 @@ public class Generator extends ReactContextBaseJavaModule implements LifecycleEv
 
                     page.addLine()
                             .addUnit(page.createUnit()
-                                    .setText("НӨАТ: " + ebarimt.getString("tax"))
+                                    .setText("НӨАТ: " + ebarimt.getString("tax") + "₮")
                                     .setFontSize(20)
                                     .setWeight(1.0f)
                                     .setGravity(Gravity.FILL));

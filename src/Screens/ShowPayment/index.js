@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useContext} from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,14 +7,14 @@ import {
   Dimensions,
   Alert,
   BackHandler,
-  LogBox
+  LogBox,
 } from 'react-native';
-import {useRoute} from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-community/async-storage';
 
 import dateFormat from 'dateformat';
-import {UserState} from '../../Context/UserStore';
+import { UserState } from '../../Context/UserStore';
 import PayButton from '../../Components/PayButton';
 import ScannButton from '../../Components/ScannButton';
 import Spinner from '../../Components/Spinner';
@@ -42,10 +42,11 @@ const ShowPayment = (props) => {
   LogBox.ignoreLogs([
     'Non-serializable values were found in the navigation state',
   ]);
-  const {PrintDiscount, PayByCard, Generator} = NativeModules;
+  const { PrintDiscount, PayByCard, Generator } = NativeModules;
   // const [tolow, setTolow] = useState(null);
-  const {state} = useContext(UserState);
+  const { state } = useContext(UserState);
   const [modal, setModal] = useState(false);
+  const nativeRes = useRef(null);
   const [payType, setPayType] = useState({
     type: 'CASH',
     rrn: '0000000000001',
@@ -82,6 +83,7 @@ const ShowPayment = (props) => {
   });
   const [serverInfo, setServerInfo] = useState({
     //Server-с мэдээллүүдийг энэ хадгалж хэрэглэнэ.
+    succesSend: false,
     paidDate: null,
     serverTxnId: null,
   });
@@ -106,14 +108,15 @@ const ShowPayment = (props) => {
           },
         },
       ],
-      {cancelable: false},
+      { cancelable: false },
     );
 
   const cacheSteps = async (step) => {
+    console.log('STEP: ', step);
     // 2 5 4 3
     let tmpSteps = localState;
     tmpSteps.steps.push(step);
-    setLocalState({...tmpSteps});
+    setLocalState({ ...tmpSteps });
     await AsyncStorage.setItem('localState', JSON.stringify(tmpSteps));
   };
 
@@ -159,7 +162,7 @@ const ShowPayment = (props) => {
       Authorization: `Bearer ${state.token}`,
     };
     await PayByCard.doData();
-    setQrState((prev) => ({...prev, qrcode: qr}));
+    setQrState((prev) => ({ ...prev, qrcode: qr }));
 
     setSpin(true);
     axios
@@ -172,7 +175,7 @@ const ShowPayment = (props) => {
         setSpin(false);
         if (res.data.message === 'Амжилттай') {
           cacheSteps(2);
-          cacheData('qrState', {...res.data.entity});
+          cacheData('qrState', { ...res.data.entity });
           // AsyncStorage.setItem(
           //   'qrState',
           //   JSON.stringify({...qrState, ...res.data.entity}),
@@ -210,8 +213,8 @@ const ShowPayment = (props) => {
           switch (e[0]) {
             case 'localState':
               {
-              setLocalState(JSON.parse(e[1])); 
-              console.log(e[1]);
+                setLocalState(JSON.parse(e[1]));
+                console.log(e[1]);
               } break;
             case 'qrState':
               setQrState(JSON.parse(e[1]));
@@ -236,7 +239,7 @@ const ShowPayment = (props) => {
       axios.defaults.headers.common = {
         Authorization: `Basic MTE0MDA1ODI2MzoxMTQwMDU4MjYz`,
       };
-      PayByCard.doWifi();
+      await PayByCard.doWifi();
       axios
         .get(
           config.localIp + ':6080/parking-local/paParkingTxn/findById/' + txnId,
@@ -282,7 +285,7 @@ const ShowPayment = (props) => {
         amount: amount,
         vat: vat,
         cashAmount: payType.type == 'CASH' ? amount : '0.00',
-        nonCashAmount: payType.type == 'CARD' ? amount : '0.00',
+        nonCashAmount: payType.type == 'CASH' ? '0.00' : amount,
         cityTax: '0.00', //eniig shiideeee
         districtCode: state.parkingList[0].districtCode,
         posNo: '', //
@@ -324,7 +327,6 @@ const ShowPayment = (props) => {
       setSpin(false);
 
       const obj = fixJson(res.data.outputResultInfoList[0]);
-      // console.log(obj);
       if (obj.success) {
         const printData = {
           ebarimt: {
@@ -336,23 +338,24 @@ const ShowPayment = (props) => {
             lottery: obj.lottery,
             qrData: obj.qrData,
             tax: obj.vat,
+            companyName: info.companyName != undefined ? info.companyName : ''
           },
         };
         // console.log('PRINTING: ', JSON.stringify(data));
-        
+
         let eBarimtList = await AsyncStorage.getItem('eBarimtList');
-        if(eBarimtList) eBarimtList = JSON.parse(eBarimtList);
+        if (eBarimtList) eBarimtList = JSON.parse(eBarimtList);
         eBarimtList.pop();
 
         await AsyncStorage.multiRemove(['eBarimtPostData', 'eBarimtList']);
         AsyncStorage.setItem('eBarimtList', JSON.stringify(eBarimtList));
         //A910 deer barimt hevleh
-        // await PrintDiscount.printBarimt(JSON.stringify(printData));
-        
+        await PrintDiscount.printBarimt(JSON.stringify(printData));
+
         //T post deeer hevleh
-        Generator.init(JSON.stringify(printData)).then(() => {
-          console.log("called init");
-        }).catch(e => console.log("Generator error: ", e));
+        // Generator.init(JSON.stringify(printData)).then(() => {
+        //   console.log("called init");
+        // }).catch(e => console.log("Generator error: ", e));
 
 
         clearCache();
@@ -371,45 +374,49 @@ const ShowPayment = (props) => {
   };
 
   const doneWithoutEbarimt = () => {
-//   console.log(state.organization_id);
+    //   console.log(state.organization_id);
     route.params.deleteById();
     clearCache();
     props.navigation.pop();
   }
 
-  const postPaidLocal = async (tmp) => {
+  const postPaidLocal = async () => {
+    console.log('calling to local: ');
+    let exitDateTmp = localInfo.calculatedDate + '';
     const data = {
-      calculatedDate: localInfo.calculatedDate,
-      checksum: localInfo.checksum,
-      createdDate: serverInfo.createdDate,
-      discountAmount: qrState.amount,
-      enterDate: serverInfo.enterDate,
-      exitDate: serverInfo.exitDate,
-      operDate: serverInfo.operDate,
-      operTerminalType: serverInfo.operTerminalType,
-      operUserId: serverInfo.operUserId,
-      paidAmount: serverInfo.paidAmount,
-      paidDate: serverInfo.paidDate,
-      paymentType: serverInfo.paymentType,
       plateNumber: localInfo.plateNumber,
+      enterDate: localInfo.enterDate,
+      exitDate: serverInfo.exitDate ?? exitDateTmp[0] + exitDateTmp[1] + exitDateTmp[2] + exitDateTmp[3] + '-' + exitDateTmp[4] + exitDateTmp[5] + '-' + exitDateTmp[6] + exitDateTmp[7] + ' ' + exitDateTmp[8] + exitDateTmp[9] + ':' + exitDateTmp[10] + exitDateTmp[11] + ':' + exitDateTmp[12] + exitDateTmp[13],//20220115192607
+      totalAmount: localInfo.totalAmount,
+      totalMinutes: localInfo.totalMinutes,
+      paymentType: payType.type,
+      paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
+      paidDate: serverInfo.paidDate ?? dateFormat(new Date(), 'yyyy-mm-dd HH:MM:ss'), //2022-01-14 10:28:25
+      statusCode: '000',
+      statusMessage: 'SUCCESS',
+      // createdDate: serverInfo.createdDate ?? dateFormat(new Date(), 'yyyy-mm-dd HH:MM:ss'),
+      createdDate: null,
+      txnId: localInfo.localTxnId,
+      serverTxnId: serverInfo.serverTxnId ?? null,
+      serverUserId: null, //asuuh
+      serverParkingId: null, //asuuh
+      discountAmount: qrState.amount,
       qrCode: qrState.qrCode,
       qrCodeAmount: qrState.amount + '',
       qrCodeMerchantId: qrState.paMerchant.merchantId,
       qrCodeParkingId: qrState.parkingId,
       qrCodeTxnId: qrState.txnId,
       qrCodeValidDate: qrState.expireDate,
-      serverParkingId: null, //asuuh
-      serverTxnId: serverInfo.serverTxnId,
-      serverUserId: null, //asuuh
-      statusCode: serverInfo.statusCode,
-      statusMessage: serverInfo.statusMessage,
-      totalAmount: serverInfo.totalAmount,
-      totalMinutes: localInfo.totalMinutes,
-      txnId: localInfo.localTxnId,
-      svRrn: serverInfo.svRrn,
-      xlsRrn: serverInfo.xlsRrn,
+      svRrn: payType.type == 'CASH' ? null : (nativeRes.current ? nativeRes.current.rrn : payType.rrn),
+      xlsRrn: payType.type == 'CASH' ? null : (nativeRes.current ? nativeRes.current.invoice : payType.invoice),
+      operDate: serverInfo.operDate ?? dateFormat(new Date(), 'yyyymmddHHMMss'),
+      operUserId: state.userId,
+      operTerminalType: state.userRole,
+      checksum: localInfo.checksum,
+      calculatedDate: localInfo.calculatedDate,
       openFlag: state.doorType /// haalga ongoiloh eseh
     };
+    console.log('sending to local data: ', JSON.stringify(data));
     axios.defaults.headers.common = {
       Authorization: `Basic MTE0MDA1ODI2MzoxMTQwMDU4MjYz`,
     };
@@ -417,26 +424,27 @@ const ShowPayment = (props) => {
     axios
       .post(config.localIp + ':6080/parking-local/paParkingTxn/paid', data)
       .then(async (res) => {
+        // console.log(res.data)
         if (res.data.message == 'Амжилттай') {
           console.log('localServer: ', res.data.message);
           cacheSteps(5);
-          let payTypeTmp = {...payType, isPaid: true};
+          let payTypeTmp = { ...payType, isPaid: true };
           setPayType(payTypeTmp);
 
           let amount = parseInt(localInfo.totalAmount) - parseInt(qrState.amount);
           amount = (Math.round(amount * 100) / 100).toFixed(2);
           const vat = (Math.round((amount / 11) * 100) / 100).toFixed(2);
-           
+
           const barimtData = [
             {
               organization_id: state.organization_id,
               amount: amount,
               vat: vat,
               cashAmount: payType.type == 'CASH' ? amount : '0.00',
-              nonCashAmount: payType.type == 'CARD' ? amount : '0.00',
-              cityTax: '0.00', 
+              nonCashAmount: payType.type == 'CASH' ? '0.00' : amount,
+              cityTax: '0.00',
               districtCode: state.parkingList[0].districtCode,
-              posNo: '', 
+              posNo: '',
               customerNo: '',
               billType: `info.type == 'org' ? '3' : '1'`,
               billIdSuffix: '',
@@ -444,7 +452,7 @@ const ShowPayment = (props) => {
               taxType: '1',
               invoiceId: '',
               reportMount: dateFormat(new Date(), 'yyyy-mm'),
-              branchNo: '001', 
+              branchNo: '001',
               stocks: [
                 {
                   barCode: '1',
@@ -463,23 +471,23 @@ const ShowPayment = (props) => {
           ];
 
           const element =
-            {
-              localInfo: {
-                downtime: localState.downtime,
-                plateNumber: localInfo.plateNumber,
-                enterDate: localInfo.enterDate,
-                paidAmount: payType.paidAmount,
-                txnId: localInfo.localTxnId
-              },
-              barimtData
-            };
+          {
+            localInfo: {
+              downtime: localState.downtime,
+              plateNumber: localInfo.plateNumber,
+              enterDate: localInfo.enterDate,
+              paidAmount: payType.paidAmount,
+              txnId: localInfo.localTxnId
+            },
+            barimtData
+          };
 
           let eBarimtList = await AsyncStorage.getItem('eBarimtList');
-          if(eBarimtList) eBarimtList = JSON.parse(eBarimtList);
+          if (eBarimtList) eBarimtList = JSON.parse(eBarimtList);
           else eBarimtList = [];
 
           eBarimtList.push(element);
-          if(eBarimtList.length > 10) eBarimtList.shift();
+          if (eBarimtList.length > 10) eBarimtList.shift();
 
           const noet = ['eBarimtList', JSON.stringify(eBarimtList)];
           const payingType = ['payType', JSON.stringify(payTypeTmp)];
@@ -495,21 +503,21 @@ const ShowPayment = (props) => {
       })
       .catch((e) => {
         setSpin(false);
-        alert('Local service connection error');
+        alert('Local service connection error', e);
         console.log('locald medegdeh uyd aldaa garaash', e);
       });
   };
 
-  const postPaidServer = async (paymentType,res) => {
+  const postPaidServer = async (paymentType, res) => {
     const netState = await NetInfo.fetch();
-    if(!netState.isConnected) {
+    if (!netState.isConnected) {
       alert('Та 4G сүлжээгээ шалгана уу.');
       return;
     }
     const data = {
       plateNumber: localInfo.plateNumber,
       enterDate: localInfo.enterDate,
-      exitDate: `${localInfo.calculatedDate.slice(0,4)}-${localInfo.calculatedDate.slice(4,6)}-${localInfo.calculatedDate.slice(6,8)} ${localInfo.calculatedDate.slice(8,10)}:${localInfo.calculatedDate.slice(10,12)}:${localInfo.calculatedDate.slice(12,14)}`, //yyyy-MM-dd HH:mm:ss  2021 09 02 19 03 27
+      exitDate: `${localInfo.calculatedDate.slice(0, 4)}-${localInfo.calculatedDate.slice(4, 6)}-${localInfo.calculatedDate.slice(6, 8)} ${localInfo.calculatedDate.slice(8, 10)}:${localInfo.calculatedDate.slice(10, 12)}:${localInfo.calculatedDate.slice(12, 14)}`, //yyyy-MM-dd HH:mm:ss  2021 09 02 19 03 27
       totalAmount: localInfo.totalAmount,
       discountAmount: qrState.amount,
       paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
@@ -519,6 +527,7 @@ const ShowPayment = (props) => {
       userId: state.userId,
       parkingId: state.parkingId,
       serverTxnId: null,
+      localTxnId: parseInt(localInfo.localTxnId),
       //-------QR code-------------------
       qrCode: qrState.qrCode,
       qrCodeTxnId: qrState.txnId,
@@ -527,8 +536,8 @@ const ShowPayment = (props) => {
       qrCodeMerchantId: qrState.paMerchant.merchantId,
       qrCodeParkingId: qrState.parkingId,
       //----------------------------------
-      svRrn: paymentType == 'CARD' ? res ? res.rrn : payType.rrn : null,
-      xlsRrn: paymentType == 'CARD' ? res ? res.invoice : payType.invoice : null,
+      svRrn: paymentType == 'CASH' ? null : (res ? res.rrn : payType.rrn),
+      xlsRrn: paymentType == 'CASH' ? null : (res ? res.invoice : payType.invoice),
       operDate: dateFormat(new Date(), 'yyyymmddHHMMss'),
       operTerminalType: state.userRole, //userRole-s hamaaruulj haruulnaa
       operUserId: state.userId,
@@ -539,7 +548,7 @@ const ShowPayment = (props) => {
     axios.defaults.headers.common = {
       Authorization: `Bearer ${state.token}`,
     };
-    console.log("SERVER PAID: ",data);
+    console.log("SERVER PAID: ", data);
 
     await PayByCard.doData();
 
@@ -558,28 +567,26 @@ const ShowPayment = (props) => {
             res.data.entity,
             true,
           );
-
+          res.data.entity.succesSend = true;
           //serverees irsen res-g stated hadgalah
           setServerInfo(res.data.entity);
         } else {
-          alert('Server paid: ' + res.data.message);
-          setSpin(false);
+          cacheSteps(4);
+          setServerInfo(prev => ({ ...prev, succesSend: false }));
+          // alert('Server paid: ' + res.data.message);
+          // setSpin(false);
         }
       })
       .catch((e) => {
         console.log('paidToServer aldaa:', e);
-        setSpin(false);
+        cacheSteps(4);
+        setServerInfo(prev => ({ ...prev, succesSend: false }));
+        // setSpin(false);
       });
   };
 
   useEffect(() => {
     localState.steps[localState.steps.length - 1] == 4 && postPaidLocal();
-    // const deleteEbarint = async () => {
-    //   await AsyncStorage.removeItem('eBarimtList');
-    //   console.log("deleted cache ebarimt list history");
-    // };
-    // deleteEbarint();
-
   }, [serverInfo]);
 
   const payByCash = () => {
@@ -596,35 +603,35 @@ const ShowPayment = (props) => {
     };
     setPayType(payTypeTmp);
     cacheData('localInfo');
-    AsyncStorage.setItem('payType',JSON.stringify(payTypeTmp));
+    AsyncStorage.setItem('payType', JSON.stringify(payTypeTmp));
   };
 
   const payByCard = async () => {
 
     NativeModules.PayByCard.pay(`${parseInt(localInfo.totalAmount) - parseInt(qrState.amount)}00`)
-    // NativeModules.PayByCard.pay('100')
       .then((res) => {
         console.log('hariu2: ', res);
         // {"code": "-22", "description": "Гүйлгээ цуцлагдсан", "invoice": null, "rrn": ""}
+        nativeRes.current = { ...res };
 
         if (res.code == 0) {
           cacheSteps(3);
-          postPaidServer('CARD',res);
+          postPaidServer((res.invoice != null && res.invoice != '') ? 'QR' : 'CARD', res);
           let payTypeTmp = {
-            ... payType, 
-            type: 'CARD',
-            rrn: res.rrn ? res.rrn : null,
-            invoice: res.invoice ? res.invoice : null,
+            ...payType,
+            type: (res.invoice != null && res.invoice != '') ? 'QR' : 'CARD',
+            rrn: (res.rrn != null && res.rrn != 'null') ? res.rrn : null,
+            invoice: (res.invoice != null && res.invoice != 'null') ? res.invoice : null,
             paidAmount: parseInt(localInfo.totalAmount) - parseInt(qrState.amount),
           };
           setPayType(payTypeTmp);
           cacheData('localInfo');
           AsyncStorage.setItem('payType', JSON.stringify(payTypeTmp));
-        }else{
-          alert('Картаар төлөх үед алдаа гарлаа. Та дахин оролдоно уу.');
+        } else {
+          Alert.alert('Уучлаарай.', 'Картаар төлөх үед алдаа гарлаа. Та дахин оролдоно уу.');
         }
       })
-      .catch((e) => {console.log('cardaar toloh uyd aldaa garlaa', e)});
+      .catch((e) => { console.log('cardaar toloh uyd aldaa garlaa', e) });
 
   };
   const payDef = (type) => {
@@ -652,7 +659,7 @@ const ShowPayment = (props) => {
 
   const backAction = () => {
     console.log("TOLSONUUU:", payType.isPaid);
-    if(payType.isPaid) {
+    if (payType.isPaid) {
       AlertBeforeGoBack();
       console.log("in if");
       return true;
@@ -660,7 +667,7 @@ const ShowPayment = (props) => {
   };
 
   useEffect(() => {
-    const backHandler = BackHandler.addEventListener("hardwareBackPress",backAction);
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
     getPayInfo(route.params.id);
     return () => {
       backHandler.remove();
@@ -677,29 +684,29 @@ const ShowPayment = (props) => {
   const Actions = () => {
     // if(tolow == 'normal')
     return (
-      <> 
+      <>
         {payType.isPaid ? (
           <View style={styles.scan}>
-            <Text style={{color: 'green', fontSize: 20, marginBottom: 10}}>
+            <Text style={{ color: 'green', fontSize: 20, marginBottom: 10 }}>
               Амжилттай төлөгдлөө.
             </Text>
-            {  state.organization_id
-                ? <PayButton red={false} title="Баримт хэвлэх" onPress={() => setModal(true)} />
-                : <PayButton red={false} title="БОЛСОН" onPress={doneWithoutEbarimt} /> } 
+            {state.organization_id
+              ? <PayButton red={false} title="Баримт хэвлэх" onPress={() => setModal(true)} />
+              : <PayButton red={false} title="БОЛСОН" onPress={doneWithoutEbarimt} />}
           </View>
         ) : (
           <>
             <View style={styles.scan}>
-              <Text style={{fontFamily: 'RobotoCondensed-Regular'}}>
+              <Text style={{ fontFamily: 'RobotoCondensed-Regular' }}>
                 Хөнгөлөлтийн хуудас уншуулах:
               </Text>
               <ScannButton onPress={scanBarcode} />
             </View>
             <View style={styles.method}>
               <View style={styles.buttons}>
-                {state.userRole === 'POSTPOS' && (  <PayButton red={true} onPress={() => payStep('CASH')}/>)}
+                {state.userRole === 'POSTPOS' && (<PayButton red={true} onPress={() => payStep('CASH')} />)}
                 {/* <PayButton red={false} onPress={() => payStep('CARD')} disabled style={{opacity: 0.5}}/> */}
-                <PayButton red={false} onPress={() => payStep('CARD')}/>
+                <PayButton red={false} onPress={() => payStep('CARD')} />
               </View>
             </View>
           </>
@@ -744,7 +751,7 @@ const ShowPayment = (props) => {
           </View> */}
           <View style={styles.row}>
             <Text style={styles.info}>Хөнгөлсөн дүн:</Text>
-            <Text style={[styles.value, {color: 'green'}]}>
+            <Text style={[styles.value, { color: 'green' }]}>
               {numberWithCommas(qrState.amount)}₮
             </Text>
           </View>
@@ -759,7 +766,7 @@ const ShowPayment = (props) => {
             <Text style={styles.value}>{numberWithCommas(payType.paidAmount)}₮</Text>
           </View>
         </View>
-        <Actions/>
+        <Actions />
       </View>
       {spin && <Spinner visible={true} />}
     </>
