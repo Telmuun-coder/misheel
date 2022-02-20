@@ -33,28 +33,77 @@ public class PayByCard extends ReactContextBaseJavaModule implements ActivityEve
         this.reactApplicationContext.addActivityEventListener(this);
     }
     @ReactMethod
-    public void pay(String value, Promise promise) {
+    public void pay(String value,  Promise promise) {
         this.promise = promise;
         Intent intent;
         intent = getCurrentActivity().getPackageManager().getLaunchIntentForPackage("mn.mid.edc");
         if (intent != null) {
-            intent.setAction("mn.mid.edc.ACTION_AMOUNT");
-            intent.setFlags(0);
-            intent.putExtra("amount", value);
-            intent.putExtra("type", "activity");
-            getCurrentActivity().startActivityForResult(intent, 100);
-        } else {
-            intent = getCurrentActivity().getPackageManager().getLaunchIntentForPackage("com.mid.app");
+          intent.setAction("mn.mid.edc.ACTION_AMOUNT");
+          intent.setFlags(0);
+          intent.putExtra("amount", value);
+          intent.putExtra("type", "activity");
+          getCurrentActivity().startActivityForResult(intent, 100);
+      } else {
+          intent = getCurrentActivity().getPackageManager().getLaunchIntentForPackage("com.mid.app");
 
-            if (intent != null) {
-                intent.setAction("com.mid.app.ACTION_AMOUNT");
-                intent.setFlags(0);
-                intent.putExtra("amount", value);
-                intent.putExtra("type", "activity");
-                getCurrentActivity().startActivityForResult(intent, 100);
-            } else Log.e("launch", "null");
+          if (intent != null) {
+              intent.setAction("com.mid.app.ACTION_AMOUNT");
+              intent.setFlags(0);
+              intent.putExtra("amount", value);
+              intent.putExtra("type", "activity");
+              getCurrentActivity().startActivityForResult(intent, 100);
+          } else Log.e("launch", "null");
+      
+      }
+
+
+        // if (type.equals("MSHLAUTOPARK")) {
+        //   if (intent != null) {
+        //     intent.setAction("mn.mid.edc.ACTION_AMOUNT");
+        //     intent.setFlags(0);
+        //     intent.putExtra("amount", value);
+        //     intent.putExtra("type", "activity");
+        //     getCurrentActivity().startActivityForResult(intent, 100);
+        // } else {
+        //     intent = getCurrentActivity().getPackageManager().getLaunchIntentForPackage("com.mid.app");
+
+        //     if (intent != null) {
+        //         intent.setAction("com.mid.app.ACTION_AMOUNT");
+        //         intent.setFlags(0);
+        //         intent.putExtra("amount", value);
+        //         intent.putExtra("type", "activity");
+        //         getCurrentActivity().startActivityForResult(intent, 100);
+        //     } else Log.e("launch", "null");
         
-        }
+        // }
+        // } else if (type.equals("MSHLECOPARK")) {
+        //   if (intent != null) {
+        //     intent.setAction("mn.mid.edc.ACTION_AMOUNT");
+        //     intent.setFlags(0);
+        //     intent.putExtra("amount", value);
+        //     intent.putExtra("type", "activity");
+        //     getCurrentActivity().startActivityForResult(intent, 100);
+        // } else {
+        //     intent = getCurrentActivity().getPackageManager().getLaunchIntentForPackage("com.mid.app");
+
+        //     if (intent != null) {
+        //         intent.setAction("com.mid.app.ACTION_AMOUNT");
+        //         intent.setFlags(0);
+        //         intent.putExtra("amount", value);
+        //         intent.putExtra("type", "activity");
+        //         getCurrentActivity().startActivityForResult(intent, 100);
+        //     } else Log.e("launch", "null");
+        
+        // }
+        // }
+       
+    }
+
+    @ReactMethod
+    public void getSerial(Promise promise) {
+        this.promise = promise;
+
+
     }
 
     @ReactMethod

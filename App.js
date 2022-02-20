@@ -23,6 +23,7 @@ import AsyncStorage from '@react-native-community/async-storage';
 import SplashScreen from 'react-native-splash-screen';
 import EbarimtList from './src/Screens/EbarimtList';
 import Printer from './src/Screens/EbarimtList/Printer';
+import ChooseWays from './src/Screens/ChooseWays/ChooseWays';
 
 const Drawer = createDrawerNavigator();
 
@@ -37,9 +38,7 @@ const Hanburner = () => {
       }}>
       <Drawer.Screen
         name="Home"
-        options={{
-          drawerLabel: 'ДУГААР ХАЙХ',
-        }}
+        options={{ drawerLabel: 'ДУГААР ХАЙХ' }}
         component={Home}
       />
       <Drawer.Screen name="EbarimtList" component={EbarimtList} />
@@ -54,42 +53,37 @@ const Hanburner = () => {
 const Stack = createStackNavigator();
 
 const MyStack = () => {
-  const { state } = useContext(UserState);
-  let returnScreen;
-  // Зогсоолын үүдэндэх пос
-  if (state.userRole === 'POSTPOS') {
-    returnScreen = (
-      <>
-        <Stack.Screen
-          name="Hanburner"
-          options={{
-            headerShown: false,
-          }}
-          component={Hanburner}
-        />
-        <Stack.Screen
-          name="ShowPayment"
-          options={{
-            headerShown: false,
-            title: 'Төлбөр төлөх',
-            headerTitleAlign: 'center',
-          }}
-          component={ShowPayment}
-        />
-      </>
-    );
-  } else {
-    //QR Хэвлэх merchant
-    returnScreen = (
-      <Stack.Screen
-        name="InputDiscountAmount"
-        component={InputDiscountAmount}
-        options={{ headerShown: false }}
-      />
-    );
-  }
-
-  return <Stack.Navigator>{returnScreen}</Stack.Navigator>;
+  return <Stack.Navigator>
+    <Stack.Screen
+      name="ChooseWays"
+      options={{
+        headerShown: false,
+      }}
+      component={ChooseWays}
+    />
+    <Stack.Screen
+      name="InputDiscountAmount"
+      component={InputDiscountAmount}
+      options={{
+        title: 'Төлбөр төлөх',
+        headerTitleAlign: 'center',
+      }}
+    />
+    <Stack.Screen
+      name="Hanburner"
+      options={{ headerShown: false }}
+      component={Hanburner}
+    />
+    <Stack.Screen
+      name="ShowPayment"
+      options={{
+        headerShown: false,
+        title: 'Төлбөр төлөх',
+        headerTitleAlign: 'center',
+      }}
+      component={ShowPayment}
+    />
+  </Stack.Navigator>;
 };
 
 const authStack = createStackNavigator();
@@ -124,9 +118,6 @@ const App = () => {
   return (
     <NavigationContainer>
       {
-        // splash ? (
-        //   <Splash />
-        // ) : 
         state.token ? (
           <MyStack />
         ) : (

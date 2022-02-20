@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, View, TouchableHighlight, Dimensions} from 'react-native';
+import { StyleSheet, View, TouchableHighlight, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
 
 const WINDOWS_WIDTH = Dimensions.get('window').width;
@@ -7,14 +7,14 @@ const WINDOWS_HEIGHT = Dimensions.get('window').height;
 
 const Button = (props) => {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, props.containerStyle]}>
       <TouchableHighlight
         onPress={() => props.onPress()}
-        style={{flex: 1}}
+        style={{ flex: 1 }}
         activeOpacity={0.6}
         underlayColor="#DDDDDD">
         <View style={styles.content}>
-          <Icon name={props.icon} size={25} color="black" style={styles.icon} />
+          <Icon name={props.icon} size={25} color={props.iconColor ?? "black"} style={styles.icon} />
         </View>
       </TouchableHighlight>
     </View>

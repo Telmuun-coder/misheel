@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React, { useContext } from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,15 @@ import {
   Dimensions,
   TouchableOpacity,
 } from 'react-native';
-import {DrawerItem, DrawerContentScrollView} from '@react-navigation/drawer';
+import { DrawerItem, DrawerContentScrollView } from '@react-navigation/drawer';
 import Icon from 'react-native-vector-icons/AntDesign';
-import {UserState} from '../../Context/UserStore';
+import { UserState } from '../../Context/UserStore';
 
 const DrawerContent = (props) => {
-  const {auth} = useContext(UserState);
+  const { auth } = useContext(UserState);
   return (
     <View style={styles.container}>
-      <DrawerContentScrollView {...props} style={{flex: 1}}>
+      <DrawerContentScrollView {...props} style={{ flex: 1 }}>
         <View style={styles.iconContainer}>
           <TouchableOpacity
             style={styles.setting}
@@ -23,7 +23,7 @@ const DrawerContent = (props) => {
           </TouchableOpacity>
         </View>
 
-        <View style={{height: 350}}>
+        <View style={{ height: 350 }}>
           <TouchableOpacity
             style={styles.item}
             onPress={() => props.navigation.navigate('Home')}>
@@ -33,6 +33,11 @@ const DrawerContent = (props) => {
             style={styles.item}
             onPress={() => props.navigation.navigate('EbarimtList')}>
             <Text style={styles.label}>НӨАТ БАРИМТ</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() => props.navigation.navigate('InputDiscountAmount')}>
+            <Text style={styles.label}>Эко-Парк</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.item}
@@ -81,7 +86,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  label: {color: '#FFFFFF', fontSize: 16, marginLeft: '20%'},
+  label: { color: '#FFFFFF', fontSize: 16, marginLeft: '20%' },
   item: {
     width: '100%',
     // marginTop: 50,

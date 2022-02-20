@@ -40,7 +40,7 @@ const Controller = (props) => {
       <View
         style={{
           flexDirection: 'row',
-          width: '60%',
+          width: '90%',
           justifyContent: 'space-around',
         }}>
         <Numbers
@@ -50,14 +50,8 @@ const Controller = (props) => {
             inputRef.current.focus();
           }}
         />
-      </View>
-      <View style={styles.buttons}>
-        {state.userRole == 'POSTPOS' && (
-          <ScannButton onPress={props.scanBarcode} disabled />
-        )}
-        <Button icon="car" onPress={props.getCar} />
+        <Button icon="search1" onPress={() => props.onSearch(selectedValue)} containerStyle={{ backgroundColor: '#006AB5', borderColor: 'transparent' }} iconColor={'#FFF'} />
         <Button icon="reload1" onPress={clear} />
-        <Button icon="search1" onPress={() => props.onSearch(selectedValue)} />
       </View>
     </View>
   );

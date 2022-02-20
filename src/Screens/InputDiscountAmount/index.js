@@ -1,4 +1,4 @@
-import React, {useState, useContext, useRef} from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,134 +8,84 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Dimensions,
-  Touchable,
+  Keyboard
 } from 'react-native';
 import Currency from 'react-currency-formatter';
 import RNPickerSelect from 'react-native-picker-select';
 import Icon from 'react-native-vector-icons/AntDesign';
 import axios from 'axios';
 
-import {UserState} from '../../Context/UserStore';
+import { UserState } from '../../Context/UserStore';
 import Spinner from '../../Components/Spinner';
 import config from '../../../config';
 
 const window_widht = Dimensions.get('window').width;
 const window_height = Dimensions.get('window').height;
 
-const placeholder = {
-  label: 'Select a parking type...',
-  value: null,
-  // color: '#9EA0A4',
-  color: 'black',
-};
-
 const DiscountAmount = () => {
-  let myRef = useRef(null);
-  const {state, setStater, auth} = useContext(UserState);
+  const myRef = useRef(null);
+  const { state, setStater, auth } = useContext(UserState);
   const [amount, setAmount] = useState();
   const [park, setPark] = useState();
   const [spin, setSpin] = useState(false);
-  const {PrintDiscount, PayByCard} = NativeModules;
+  const { PrintDiscount, PayByCard } = NativeModules;
   const format = (val) => {
     setAmount(val.replace(/[^0-9]/g, ''));
   };
 
   const Print = async () => {
-    axios.defaults.headers.common = {
-      Authorization: `Bearer ${state.token}`,
-    };
-    setSpin(true);
-    await PayByCard.doData();
-    await axios
-      .post(`${config.apiMinu}/parking/paMerchant/generateQr`, {
-        amount: amount + '',
-        parkingId: park,
-      })
-      .then((res) => {
-        setSpin(false);
-        if (res.data.message === 'Амжилттай') {
-          PrintDiscount.callPrinter(
-            JSON.stringify({
-              merchantName: state.merchant.merchantName,
-              merchantId: state.merchant.merchantId,
-              discount: amount,
-              qrValue: res.data.entity,
-            }),
-          );
-        }
-      })
-      .catch((e) => {
-        console.log('qr get info awah uyd aldaa garlaa', e);
-        setSpin(false);
-      });
+    alert('kke');
+    // PayByCard.pay(`${amount}00`, 'MSHLECOPARK')
+    //   .then((res) => {
+    //     console.log('hariu2: ', res);
+    //     // {"code": "-22", "description": "Гүйлгээ цуцлагдсан", "invoice": null, "rrn": ""}
+
+    //     if (res.code == 0) {
+
+    //     } else {
+    //       Alert.alert('Уучлаарай.', 'Картаар төлөх үед алдаа гарлаа. Та дахин оролдоно уу.');
+    //     }
+    //   })
   };
+
+  const focus = () => {
+    console.log('gotta focus');
+    myRef.current.focus();
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Хөнгөлөлтийн хуудас хэвлэх</Text>
+        <Text style={styles.title}>Эко-Парк</Text>
       </View>
-      <Text style={styles.tailbar}>Зогсоол сонгох</Text>
-      <RNPickerSelect
-        placeholder={placeholder}
-        items={state.parkingList.map((e, i) => {
-          return {
-            label: e.parkingName,
-            value: e.parkingId,
-          };
-        })}
-        onValueChange={(value) => {
-          setPark(value);
-        }}
-        style={{
-          ...pickerSelectStyles,
-          iconContainer: {
-            top: 15,
-            right: 20,
-            // backgroundColor: 'red',
-          },
-        }}
-        value={park}
-        useNativeAndroidPickerStyle={false}
-        // textInputProps={{underlineColor: 'yellow'}}
-        Icon={() => {
-          return <Icon name="down" size={24} color="gray" />;
-        }}
-      />
-
-      <Text style={styles.tailbar}>Хөнгөлөлтийн дүнг оруулах</Text>
-      <TextInput
-        ref={myRef}
-        maxLength={9}
-        learTextOnFocus={true}
-        selectTextOnFocus={false}
-        value={amount}
-        onChangeText={(val) => format(val)}
-        caretHidden={true}
-        // autoFocus={true}
-        style={styles.realInputButYouCantSee}
-        keyboardType="numeric"
-      />
-      <TouchableWithoutFeedback
-        onPress={() => {
-          myRef.current.focus();
-        }}>
-        <Text style={styles.input}>
-          <Currency
-            quantity={parseInt(amount) ? parseInt(amount) : 0}
-            currency="MNT"
-            pattern="##,### !" // Optional
-            decimal="," // Optional
-            group="," // Optional
+      <TouchableWithoutFeedback onPress={focus}>
+        <View style={styles.inputView}>
+          <Text style={styles.input}>
+            <Currency
+              quantity={amount ? parseInt(amount) : 0}
+              currency="MNT"
+              pattern="##,### !" // Optional
+              decimal="," // Optional
+              group="," // Optional
+            />
+          </Text>
+          <TextInput
+            ref={myRef}
+            maxLength={9}
+            learTextOnFocus={true}
+            selectTextOnFocus={false}
+            value={amount}
+            onChangeText={(val) => format(val)}
+            caretHidden={true}
+            autoFocus={true}
+            style={styles.realInputButYouCantSee}
+            keyboardType="numeric"
           />
-        </Text>
+        </View>
       </TouchableWithoutFeedback>
       <View style={styles.btnCon}>
         <TouchableOpacity onPress={Print} style={styles.print}>
-          <Text style={{color: 'white'}}>ХЭВЛЭХ</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => auth.logout()} style={{marginTop: 50}}>
-          <Text style={styles.logoutText}>ГАРАХ</Text>
+          <Text style={{ color: 'white' }}>Төлөх</Text>
         </TouchableOpacity>
       </View>
       <Spinner visible={spin} />
@@ -152,31 +102,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  input: {
+  inputView: {
+    paddingHorizontal: 15,
+    paddingTop: 3,
     width: '70%',
-    padding: 0,
     height: 50,
     borderColor: 'gray',
     borderWidth: 1,
     borderRadius: 8,
+    // backgroundColor: 'green'
+  },
+  input: {
     textAlign: 'right',
+    padding: 0,
     fontSize: 30,
     color: '#736c6c',
-    paddingHorizontal: 15,
-    paddingTop: 3,
+    // backgroundColor: 'red'
   },
   realInputButYouCantSee: {
-    backfaceVisibility: 'hidden',
-    width: '0%',
-    height: '0%',
+    // backfaceVisibility: 'hidden',
+    width: '160%',
+    height: 50,
+    textAlign: 'left',
     // backgroundColor: 'transparent',
     // backgroundColor: 'yellow',
     position: 'absolute',
-    top: -10,
-    left: -10,
+    top: 0,
+    left: '-60%',
     // zIndex: 10,
-    // color: 'red',
+    // color: 'blue',
     color: 'transparent',
+    opacity: 0
   },
   print: {
     width: '70%',
@@ -191,7 +147,7 @@ const styles = StyleSheet.create({
   },
   header: {
     position: 'absolute',
-    top: 50,
+    top: 30
   },
   title: {
     fontSize: 20,
